@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Sauga Artisan Festival
 
 A unified monorepo containing the marketing website and vendor application portal for the Sauga Artisan Festival.
@@ -168,3 +169,6 @@ Confirmation emails are sent via [Resend](https://resend.com). To enable:
 5. Configure the email template in the admin portal → Email Settings tab
 
 Template variables: `{{firstName}}`, `{{lastName}}`, `{{emailAddress}}`, `{{businessName}}`
+=======
+# artisan-fest
+>>>>>>> 5cb9e8cd10a074c4ad3434a3f39a688ffab59f43
