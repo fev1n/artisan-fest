@@ -131,30 +131,45 @@ router.post("/applications", (req, res, next) => {
     return;
   }
 
-  const [application] = await db.insert(vendorApplicationsTable).values({
-    firstName: body.firstName,
-    lastName: body.lastName,
-    businessName: body.businessName || null,
-    streetAddress: body.streetAddress,
-    city: body.city,
-    province: body.province,
-    postalCode: body.postalCode,
-    phoneNumber: body.phoneNumber,
-    emailAddress: body.emailAddress,
-    website: body.website || null,
-    instagram: body.instagram || null,
-    facebook: body.facebook || null,
-    onlineStore: body.onlineStore || null,
-    otherSocialMedia: body.otherSocialMedia || null,
-    productCategories: body.productCategories,
-    productDescription: body.productDescription,
-    artistBio: body.artistBio,
-    isArtisanFoodVendor: body.isArtisanFoodVendor,
-    grantPromoPermission: body.grantPromoPermission,
-    agreeToTerms: body.agreeToTerms,
-    logoFileName,
-    photoFileNames,
-  }).returning();
+  let application;
+  try {
+    const result = await db.insert(vendorApplicationsTable).values({
+      firstName: body.firstName,
+      lastName: body.lastName,
+      businessName: body.businessName || null,
+      streetAddress: body.streetAddress,
+      city: body.city,
+      province: body.province,
+      postalCode: body.postalCode,
+      phoneNumber: body.phoneNumber,
+      emailAddress: body.emailAddress,
+      website: body.website || null,
+      instagram: body.instagram || null,
+      facebook: body.facebook || null,
+      onlineStore: body.onlineStore || null,
+      otherSocialMedia: body.otherSocialMedia || null,
+      productCategories: body.productCategories,
+      productDescription: body.productDescription,
+      artistBio: body.artistBio,
+      isArtisanFoodVendor: body.isArtisanFoodVendor,
+      grantPromoPermission: body.grantPromoPermission,
+      agreeToTerms: body.agreeToTerms,
+      logoFileName,
+      photoFileNames,
+    }).returning();
+    application = result[0];
+  } catch (err: unknown) {
+    const pgErr = err as { message?: string; code?: string; detail?: string; constraint?: string };
+    logger.error({
+      err,
+      pgCode: pgErr.code,
+      pgDetail: pgErr.detail,
+      pgConstraint: pgErr.constraint,
+      message: pgErr.message,
+    }, "DB insert failed for vendor application");
+    res.status(500).json({ error: "Failed to save application. Please try again." });
+    return;
+  }
 
   req.log.info({ id: application.id }, "Vendor application submitted");
 

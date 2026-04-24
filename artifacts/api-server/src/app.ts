@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
@@ -47,3 +47,12 @@ if (process.env.NODE_ENV === "production") {
 }
 
 export default app;
+
+// Global error handler — must be last and have 4 params for Express to recognise it
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const e = err as { message?: string; status?: number; statusCode?: number; code?: string; detail?: string };
+  logger.error({ err, pgCode: e.code, pgDetail: e.detail }, e.message ?? "Unhandled error");
+  const status = e.status ?? e.statusCode ?? 500;
+  res.status(status).json({ error: e.message ?? "Internal server error" });
+});
