@@ -41,7 +41,7 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(staticDir));
   // SPA fallback — serve index.html for every non-API route so client-side
   // routing (/apply, /admin) works on direct load or page refresh.
-  app.get("/{*splat}", (_req, res) => {
+  app.get("*", (_req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
   });
 }
