@@ -15,25 +15,69 @@ const useReducedMotion = () => {
   return pref;
 };
 
+const useCountdown = () => {
+  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  useEffect(() => {
+    const target = new Date("August 22, 2026 12:00:00").getTime();
+    const tick = () => {
+      const d = target - Date.now();
+      if (d < 0) return;
+      setTime({ days: Math.floor(d / 86400000), hours: Math.floor((d % 86400000) / 3600000), minutes: Math.floor((d % 3600000) / 60000), seconds: Math.floor((d % 60000) / 1000) });
+    };
+    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
+  }, []);
+  return time;
+};
+
 const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
   e.preventDefault();
   const el = document.getElementById(id);
   if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
 };
 
-// ── Reusable draggable widget ─────────────────────────────────────────────────
+// ── Info card data ────────────────────────────────────────────────────────────
+
+const infoItems = [
+  { value: "AUGUST 22, 2026", key: "saf-info-date", defaultPos: { x: 12, y: 120 }, bg: "#fdb92e", color: "#3d0082", shadow: "#c9901a", rot: "-3deg" },
+  { value: "12 PM – 8 PM",   key: "saf-info-time", defaultPos: { x: 12, y: 192 }, bg: "#e7572f", color: "#ffffff", shadow: "#a83a1a", rot: "2deg" },
+  { value: "PORT CREDIT MEMORIAL PARK", key: "saf-info-loc", defaultPos: { x: 12, y: 264 }, bg: "#3d0082", color: "#fdb92e", shadow: "#1e0040", rot: "-1.5deg" },
+];
+
+// ── Shared visual components ──────────────────────────────────────────────────
+
+const CountdownInner = ({ time }: { time: { days: number; hours: number; minutes: number; seconds: number } }) => (
+  <div
+    className="px-4 py-3 rounded-2xl flex gap-3"
+    style={{
+      background: "#fdb92e",
+      boxShadow: "4px 4px 0px #c9901a",
+      transform: "rotate(1.5deg)",
+      fontFamily: "'Squada One', sans-serif",
+    }}
+  >
+    {(["days", "hours", "minutes", "seconds"] as const).map(u => (
+      <div key={u} className="flex flex-col items-center min-w-[38px]">
+        <span className="text-xl text-[#3d0082] leading-none" style={{ letterSpacing: "0.08em" }}>{time[u]}</span>
+        <span className="text-[9px] uppercase text-[#3d0082]/60" style={{ letterSpacing: "0.15em" }}>
+          {{ days: "DAYS", hours: "HRS", minutes: "MIN", seconds: "SEC" }[u]}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+// ── Reusable draggable widget (desktop only) ──────────────────────────────────
 
 interface DraggableWidgetProps {
   storageKey: string;
   defaultPos: { x: number; y: number };
   bobAnimation?: boolean;
-  fixedToViewport?: boolean;
   children: React.ReactNode;
   className?: string;
   testId?: string;
 }
 
-const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, fixedToViewport = false, children, className = "", testId }: DraggableWidgetProps) => {
+const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, children, className = "", testId }: DraggableWidgetProps) => {
   const noMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(() => {
@@ -43,37 +87,19 @@ const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, fixedTo
   const [drag, setDrag] = useState(false);
   const ds = useRef({ mx: 0, my: 0, px: 0, py: 0 });
 
-  useEffect(() => {
-    if (!fixedToViewport) return;
-    const clamp = () => {
-      if (!ref.current) return;
-      const { width, height } = ref.current.getBoundingClientRect();
-      setPos((p: { x: number; y: number }) => ({
-        x: Math.max(0, Math.min(p.x, window.innerWidth - width)),
-        y: Math.max(0, Math.min(p.y, window.innerHeight - height)),
-      }));
-    };
-    window.addEventListener("resize", clamp);
-    return () => window.removeEventListener("resize", clamp);
-  }, [fixedToViewport]);
-
   const onDown = (e: React.PointerEvent) => {
     setDrag(true);
-    const cx = fixedToViewport ? e.clientX : e.pageX;
-    const cy = fixedToViewport ? e.clientY : e.pageY;
-    ds.current = { mx: cx, my: cy, px: pos.x, py: pos.y };
+    ds.current = { mx: e.pageX, my: e.pageY, px: pos.x, py: pos.y };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onMove = (e: React.PointerEvent) => {
     if (!drag || !ref.current) return;
     const { width, height } = ref.current.getBoundingClientRect();
-    const cx = fixedToViewport ? e.clientX : e.pageX;
-    const cy = fixedToViewport ? e.clientY : e.pageY;
-    const maxX = fixedToViewport ? window.innerWidth : document.documentElement.scrollWidth;
-    const maxY = fixedToViewport ? window.innerHeight : document.documentElement.scrollHeight;
+    const maxX = document.documentElement.scrollWidth;
+    const maxY = document.documentElement.scrollHeight;
     setPos({
-      x: Math.max(0, Math.min(ds.current.px + cx - ds.current.mx, maxX - width)),
-      y: Math.max(0, Math.min(ds.current.py + cy - ds.current.my, maxY - height)),
+      x: Math.max(0, Math.min(ds.current.px + e.pageX - ds.current.mx, maxX - width)),
+      y: Math.max(80, Math.min(ds.current.py + e.pageY - ds.current.my, maxY - height)),
     });
   };
   const onUp = (e: React.PointerEvent) => {
@@ -90,7 +116,7 @@ const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, fixedTo
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onUp}
-      className={`z-50 select-none ${fixedToViewport ? "fixed" : "absolute"} ${drag ? "cursor-grabbing" : "cursor-grab"} ${bobAnimation && !drag && !noMotion ? "animate-[countdown-bob_4s_infinite_ease-in-out]" : ""} ${className}`}
+      className={`z-40 select-none absolute ${drag ? "cursor-grabbing" : "cursor-grab"} ${bobAnimation && !drag && !noMotion ? "animate-[countdown-bob_4s_infinite_ease-in-out]" : ""} ${className}`}
       style={{ left: pos.x, top: pos.y, touchAction: "none" }}
     >
       {children}
@@ -98,54 +124,20 @@ const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, fixedTo
   );
 };
 
-// ── Draggable Countdown ───────────────────────────────────────────────────────
+// ── Draggable Countdown (desktop) ─────────────────────────────────────────────
 
 const DraggableCountdown = () => {
-  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const target = new Date("August 22, 2026 12:00:00").getTime();
-    const tick = () => {
-      const d = target - Date.now();
-      if (d < 0) return;
-      setTime({ days: Math.floor(d / 86400000), hours: Math.floor((d % 86400000) / 3600000), minutes: Math.floor((d % 3600000) / 60000), seconds: Math.floor((d % 60000) / 1000) });
-    };
-    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
-  }, []);
-
-  const defaultX = typeof window !== "undefined" ? window.innerWidth - 260 : 900;
+  const time = useCountdown();
+  const defaultX = typeof window !== "undefined" ? window.innerWidth - 280 : 700;
 
   return (
-    <DraggableWidget storageKey="saf-countdown-pos" defaultPos={{ x: defaultX, y: 100 }} bobAnimation fixedToViewport testId="countdown-widget">
-      <div
-        className="px-4 py-3 rounded-2xl flex gap-3"
-        style={{
-          background: "#fdb92e",
-          boxShadow: "4px 4px 0px #c9901a",
-          transform: "rotate(1.5deg)",
-          fontFamily: "'Squada One', sans-serif",
-        }}
-      >
-        {(["days", "hours", "minutes", "seconds"] as const).map(u => (
-          <div key={u} className="flex flex-col items-center min-w-[38px]">
-            <span className="text-xl text-[#3d0082] leading-none" style={{ letterSpacing: "0.08em" }}>{time[u]}</span>
-            <span className="text-[9px] uppercase text-[#3d0082]/60" style={{ letterSpacing: "0.15em" }}>
-              {{ days: "DAYS", hours: "HRS", minutes: "MIN", seconds: "SEC" }[u]}
-            </span>
-          </div>
-        ))}
-      </div>
+    <DraggableWidget storageKey="saf-countdown-pos" defaultPos={{ x: defaultX, y: 120 }} bobAnimation testId="countdown-widget">
+      <CountdownInner time={time} />
     </DraggableWidget>
   );
 };
 
-// ── Draggable Info Cards ──────────────────────────────────────────────────────
-
-const infoItems = [
-  { value: "AUGUST 22, 2026", key: "saf-info-date", defaultPos: { x: 12, y: 120 }, bg: "#fdb92e", color: "#3d0082", shadow: "#c9901a", rot: "-3deg" },
-  { value: "12 PM – 8 PM",   key: "saf-info-time", defaultPos: { x: 12, y: 192 }, bg: "#e7572f", color: "#ffffff", shadow: "#a83a1a", rot: "2deg" },
-  { value: "PORT CREDIT MEMORIAL PARK", key: "saf-info-loc", defaultPos: { x: 12, y: 264 }, bg: "#3d0082", color: "#fdb92e", shadow: "#1e0040", rot: "-1.5deg" },
-];
+// ── Draggable Info Cards (desktop) ────────────────────────────────────────────
 
 const DraggableInfoCards = () => (
   <>
@@ -171,6 +163,47 @@ const DraggableInfoCards = () => (
     ))}
   </>
 );
+
+// ── Mobile Info Bar (static, no drag) ────────────────────────────────────────
+
+const MobileInfoBar = () => {
+  const noMotion = useReducedMotion();
+  const time = useCountdown();
+
+  return (
+    <div className="flex flex-col items-center gap-4 my-8">
+      <div
+        className={noMotion ? "" : "animate-[countdown-bob_4s_0s_infinite_ease-in-out]"}
+      >
+        <CountdownInner time={time} />
+      </div>
+      {infoItems.map((item, i) => (
+        <div
+          key={item.key}
+          className={noMotion ? "" : "animate-[countdown-bob_4s_infinite_ease-in-out]"}
+          style={{ animationDelay: `${(i + 1) * 0.6}s` }}
+        >
+          <div
+            className="px-5 py-3 rounded-2xl"
+            style={{
+              background: item.bg,
+              color: item.color,
+              transform: `rotate(${item.rot})`,
+              boxShadow: `4px 4px 0px ${item.shadow}`,
+              fontFamily: "'Squada One', sans-serif",
+              letterSpacing: "0.12em",
+              fontSize: "0.85rem",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {item.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ── Floating Apply ────────────────────────────────────────────────────────────
 
@@ -211,7 +244,7 @@ const Navbar = () => {
 
   return (
     <header data-testid="nav"
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-md shadow-md py-3" : "bg-white py-4"}`}>
+      className={`fixed top-0 left-0 w-full z-[60] transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-md shadow-md py-3" : "bg-white py-4"}`}>
       <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
         <a href="#">
           <img src={logoImg} alt="Sauga Artisan Festival" className="h-10 w-10 rounded-md object-cover" />
@@ -269,7 +302,7 @@ const Hero = () => (
           Free Entry · All Welcome
         </div>
 
-        <h1 className="font-title leading-none mb-10 select-none">
+        <h1 className="font-title leading-none mb-6 select-none">
           <span className="block text-7xl md:text-9xl lg:text-[10rem] text-[#fdb92e] tracking-tight">SAUGA</span>
           <span className="relative inline-block my-1 md:my-2">
             <span className="block bg-[#e7572f] text-white font-[Caveat] italic text-5xl md:text-7xl lg:text-8xl px-6 md:px-10 py-1 md:py-2 rounded-sm" style={{ fontStyle: "italic" }}>
@@ -278,6 +311,11 @@ const Hero = () => (
           </span>
           <span className="block text-7xl md:text-9xl lg:text-[10rem] text-[#fdb92e] tracking-tight">FESTIVAL</span>
         </h1>
+
+        {/* Mobile-only static info cards with bobbing animation */}
+        <div className="md:hidden">
+          <MobileInfoBar />
+        </div>
 
         <p className="text-xl md:text-2xl text-[#3d0082]/70 font-subtitle font-light mb-12 max-w-xl mx-auto leading-relaxed" style={{ fontWeight: 300 }}>
           A one-day celebration of local art, handmade goods, food, family activities, and creative small businesses in the heart of Port Credit.
@@ -525,8 +563,11 @@ export default function Home() {
         <Location />
       </main>
       <Footer />
-      <DraggableCountdown />
-      <DraggableInfoCards />
+      {/* Desktop-only draggable stickers */}
+      <div className="hidden md:block">
+        <DraggableCountdown />
+        <DraggableInfoCards />
+      </div>
       <FloatingApply />
     </div>
   );
