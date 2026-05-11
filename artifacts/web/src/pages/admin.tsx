@@ -239,9 +239,33 @@ function DetailDrawer({ app, onClose, token }: { app: Application; onClose: () =
           )}
 
           {app.photoFileNames && (
-            <Field label="Submitted Photos" value={app.photoFileNames.split(",").map(f => `• ${f.trim()}`).join("\n")} />
+            <div className="py-2 border-b border-border/40">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Submitted Photos</p>
+              <div className="grid grid-cols-3 gap-2">
+                {app.photoFileNames.split(",").map((url, i) => (
+                  <a key={i} href={url.trim()} target="_blank" rel="noopener noreferrer" className="block">
+                    <img
+                      src={url.trim()}
+                      alt={`Product photo ${i + 1}`}
+                      className="w-full aspect-square object-cover rounded-md border border-border hover:opacity-75 transition-opacity"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
-          {app.logoFileName && <Field label="Logo File" value={app.logoFileName} />}
+          {app.logoFileName && (
+            <div className="py-2 border-b border-border/40 last:border-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Logo</p>
+              <a href={app.logoFileName} target="_blank" rel="noopener noreferrer" className="inline-block">
+                <img
+                  src={app.logoFileName}
+                  alt="Business logo"
+                  className="h-20 w-auto object-contain rounded-md border border-border hover:opacity-75 transition-opacity"
+                />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>
