@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Check, UploadCloud, Info, AlertCircle, Loader2, X, ImageIcon } from "lucide-react";
+import { Check, UploadCloud, Info, AlertCircle, Loader2, X, ImageIcon, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -311,6 +311,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
+
+        {/* BACK BUTTON */}
+        <div>
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-[#e7572f] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </a>
+        </div>
 
         {/* HEADER */}
         <div className="text-center space-y-3 mb-10">

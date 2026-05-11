@@ -238,7 +238,6 @@ const Navbar = () => {
   const links = [
     { name: "About", href: "about" },
     { name: "Vendors", href: "vendors" },
-    { name: "Vendor List", href: "vendor-list" },
     { name: "Location", href: "location" },
   ];
 
@@ -433,48 +432,7 @@ const VendorCallout = () => {
   );
 };
 
-// ── Vendor List ───────────────────────────────────────────────────────────────
 
-const VendorList = () => {
-  const noMotion = useReducedMotion();
-  const cards = [
-    { label: "Artist", bg: "#3d0082", icon: "★", light: true },
-    { label: "Handmade", bg: "#fdb92e", icon: "✺", light: false },
-    { label: "Food", bg: "#e7572f", icon: "❀", light: true },
-    { label: "Maker", bg: "#fdb92e", icon: "◆", light: false },
-    { label: "Creative Business", bg: "#3d0082", icon: "✦", light: true },
-    { label: "Workshop", bg: "#e7572f", icon: "◈", light: true },
-  ];
-
-  return (
-    <section id="vendor-list" className="py-24 bg-white">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="max-w-2xl mx-auto text-center mb-14">
-          <h2 className="text-5xl md:text-6xl font-[Caveat] text-[#e7572f] mb-5">Vendor Lineup</h2>
-          <p className="text-lg font-sans text-[#3d0082]/75 leading-relaxed">
-            Our vendor lineup will be announced soon. Stay connected as we reveal the artists, makers, food vendors, and creative businesses joining us.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {cards.map((card, i) => (
-            <motion.div key={i}
-              initial={noMotion ? {} : { opacity: 0, scale: 0.95 }}
-              whileInView={noMotion ? {} : { opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: noMotion ? 0 : i * 0.08 }}
-              className="rounded-3xl aspect-[4/3] relative overflow-hidden flex flex-col items-center justify-center p-6 text-center border-4 border-white shadow-md"
-              style={{ background: card.bg }}>
-              <div className="absolute inset-0 flex items-center justify-center text-white/10 text-[12rem] select-none pointer-events-none">{card.icon}</div>
-              <h3 className="font-[Caveat] text-2xl mb-3 relative z-10" style={{ color: card.light ? "#fff" : "#3d0082" }}>{card.label}</h3>
-              <span className="font-[Caveat] text-2xl relative z-10" style={{ color: card.light ? "#fdb92e" : "#e7572f" }}>Coming Soon</span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
 // ── Sponsors ──────────────────────────────────────────────────────────────────
 
@@ -558,7 +516,6 @@ export default function Home() {
         <Hero />
         <About />
         <VendorCallout />
-        <VendorList />
         <Sponsors />
         <Location />
       </main>
