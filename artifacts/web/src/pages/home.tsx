@@ -27,12 +27,13 @@ interface DraggableWidgetProps {
   storageKey: string;
   defaultPos: { x: number; y: number };
   bobAnimation?: boolean;
+  fixedToViewport?: boolean;
   children: React.ReactNode;
   className?: string;
   testId?: string;
 }
 
-const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, children, className = "", testId }: DraggableWidgetProps) => {
+const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, fixedToViewport = false, children, className = "", testId }: DraggableWidgetProps) => {
   const noMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(() => {
@@ -43,6 +44,7 @@ const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, childre
   const ds = useRef({ mx: 0, my: 0, px: 0, py: 0 });
 
   useEffect(() => {
+    if (!fixedToViewport) return;
     const clamp = () => {
       if (!ref.current) return;
       const { width, height } = ref.current.getBoundingClientRect();
@@ -53,19 +55,25 @@ const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, childre
     };
     window.addEventListener("resize", clamp);
     return () => window.removeEventListener("resize", clamp);
-  }, []);
+  }, [fixedToViewport]);
 
   const onDown = (e: React.PointerEvent) => {
     setDrag(true);
-    ds.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
+    const cx = fixedToViewport ? e.clientX : e.pageX;
+    const cy = fixedToViewport ? e.clientY : e.pageY;
+    ds.current = { mx: cx, my: cy, px: pos.x, py: pos.y };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onMove = (e: React.PointerEvent) => {
     if (!drag || !ref.current) return;
     const { width, height } = ref.current.getBoundingClientRect();
+    const cx = fixedToViewport ? e.clientX : e.pageX;
+    const cy = fixedToViewport ? e.clientY : e.pageY;
+    const maxX = fixedToViewport ? window.innerWidth : document.documentElement.scrollWidth;
+    const maxY = fixedToViewport ? window.innerHeight : document.documentElement.scrollHeight;
     setPos({
-      x: Math.max(0, Math.min(ds.current.px + e.clientX - ds.current.mx, window.innerWidth - width)),
-      y: Math.max(0, Math.min(ds.current.py + e.clientY - ds.current.my, window.innerHeight - height)),
+      x: Math.max(0, Math.min(ds.current.px + cx - ds.current.mx, maxX - width)),
+      y: Math.max(0, Math.min(ds.current.py + cy - ds.current.my, maxY - height)),
     });
   };
   const onUp = (e: React.PointerEvent) => {
@@ -82,7 +90,7 @@ const DraggableWidget = ({ storageKey, defaultPos, bobAnimation = false, childre
       onPointerMove={onMove}
       onPointerUp={onUp}
       onPointerCancel={onUp}
-      className={`fixed z-50 select-none ${drag ? "cursor-grabbing" : "cursor-grab"} ${bobAnimation && !drag && !noMotion ? "animate-[countdown-bob_4s_infinite_ease-in-out]" : ""} ${className}`}
+      className={`z-50 select-none ${fixedToViewport ? "fixed" : "absolute"} ${drag ? "cursor-grabbing" : "cursor-grab"} ${bobAnimation && !drag && !noMotion ? "animate-[countdown-bob_4s_infinite_ease-in-out]" : ""} ${className}`}
       style={{ left: pos.x, top: pos.y, touchAction: "none" }}
     >
       {children}
@@ -108,7 +116,7 @@ const DraggableCountdown = () => {
   const defaultX = typeof window !== "undefined" ? window.innerWidth - 260 : 900;
 
   return (
-    <DraggableWidget storageKey="saf-countdown-pos" defaultPos={{ x: defaultX, y: 100 }} bobAnimation testId="countdown-widget">
+    <DraggableWidget storageKey="saf-countdown-pos" defaultPos={{ x: defaultX, y: 100 }} bobAnimation fixedToViewport testId="countdown-widget">
       <div
         className="px-4 py-3 rounded-2xl flex gap-3"
         style={{
@@ -142,7 +150,7 @@ const infoItems = [
 const DraggableInfoCards = () => (
   <>
     {infoItems.map(item => (
-      <DraggableWidget key={item.key} storageKey={item.key} defaultPos={item.defaultPos}>
+      <DraggableWidget key={item.key} storageKey={item.key} defaultPos={item.defaultPos} bobAnimation>
         <div
           className="px-5 py-3 rounded-2xl"
           style={{
@@ -506,7 +514,7 @@ const Footer = () => (
 
 export default function Home() {
   return (
-    <div className="font-sans bg-white text-[#3d0082] overflow-x-hidden selection:bg-[#e7572f] selection:text-white">
+    <div className="relative font-sans bg-white text-[#3d0082] overflow-x-hidden selection:bg-[#e7572f] selection:text-white">
       <Navbar />
       <main>
         <Hero />
