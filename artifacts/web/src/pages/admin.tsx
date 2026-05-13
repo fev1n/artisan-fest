@@ -366,7 +366,7 @@ function ResponsesTab({ token }: { token: string }) {
                     className={`border-t border-border hover:bg-muted/40 cursor-pointer transition-colors ${i % 2 === 0 ? "" : "bg-muted/20"}`}
                     onClick={() => setSelected(app)}
                   >
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{app.id}</td>
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{i + 1}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                       {new Date(app.submittedAt).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })}
                     </td>
