@@ -19,7 +19,6 @@ async function uploadFileToStorage(
 ): Promise<string> {
   const supabase = getSupabaseClient();
   const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
-  const ext = file.originalname.includes(".") ? file.originalname.split(".").pop() : "";
   const timestamp = Date.now();
   const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${folder}/${timestamp}-${safeName}`;
@@ -32,6 +31,42 @@ async function uploadFileToStorage(
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
+}
+
+async function sendAdminNotificationEmail(app: VendorApplication): Promise<void> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL;
+  if (!resendApiKey || !adminEmail) return;
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(resendApiKey);
+
+  const body = [
+    `New vendor application received — #${app.id}`,
+    ``,
+    `Name:       ${app.firstName} ${app.lastName}`,
+    `Business:   ${app.businessName ?? "—"}`,
+    `Email:      ${app.emailAddress}`,
+    `Phone:      ${app.phoneNumber}`,
+    `City:       ${app.city}, ${app.province}`,
+    `Categories: ${app.productCategories}`,
+    `Food Vendor: ${app.isArtisanFoodVendor === "yes" ? "Yes" : "No"}`,
+    ``,
+    `Description:`,
+    app.productDescription,
+    ``,
+    `View all applications at https://saugaartisanfest.ca/admin`,
+  ].join("\n");
+
+  const { error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM ?? "Sauga Artisan Festival <noreply@saugaartisanfest.ca>",
+    to: adminEmail,
+    subject: `New Application #${app.id}: ${app.firstName} ${app.lastName}${app.businessName ? ` — ${app.businessName}` : ""}`,
+    text: body,
+  });
+
+  if (error) throw new Error(error.message);
+  logger.info({ to: adminEmail, appId: app.id }, "Admin notification email sent");
 }
 
 async function sendConfirmationEmail(app: VendorApplication): Promise<void> {
@@ -173,9 +208,12 @@ router.post("/applications", (req, res, next) => {
 
   req.log.info({ id: application.id }, "Vendor application submitted");
 
-  // Non-blocking — confirmation email failure does not affect submission response
+  // Non-blocking — email failures do not affect the submission response
   sendConfirmationEmail(application).catch((err) => {
     logger.warn({ err }, "Failed to send confirmation email");
+  });
+  sendAdminNotificationEmail(application).catch((err) => {
+    logger.warn({ err }, "Failed to send admin notification email");
   });
 
   res.status(201).json(application);
