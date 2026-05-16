@@ -406,7 +406,6 @@ const VendorCallout = () => {
 
         <div className="grid md:grid-cols-3 gap-5 mb-14">
           {[
-            { label: "Early Bird Deadline", value: "May 15", highlight: false },
             { label: "Application Deadline", value: "May 30", highlight: true },
             { label: "Vendor Fee", value: "$100 + HST", highlight: false },
           ].map((d, i) => (
