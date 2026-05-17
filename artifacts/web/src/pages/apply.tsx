@@ -731,14 +731,74 @@ function FoodForm({ onSuccess }: { onSuccess: () => void }) {
                   </FormLabel>
                   <FormControl>
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
-                      {[
-                        { value: "truck", label: "Food Truck", icon: "🚚" },
-                        { value: "tent", label: "Tent Setup", icon: "⛺" },
-                      ].map((opt) => (
+                      {([
+                        {
+                          value: "truck", label: "Food Truck",
+                          svg: (
+                            <svg viewBox="0 0 120 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-16">
+                              <rect x="5" y="22" width="88" height="42" rx="5" fill="#e7572f"/>
+                              <rect x="80" y="30" width="30" height="34" rx="4" fill="#c94a25"/>
+                              <rect x="84" y="34" width="22" height="16" rx="3" fill="#bde0f5" opacity="0.85"/>
+                              <line x1="95" y1="38" x2="95" y2="50" stroke="#a83a1a" strokeWidth="1.5"/>
+                              <rect x="8" y="17" width="66" height="9" rx="3" fill="#3d0082"/>
+                              <rect x="19" y="17" width="4" height="9" fill="#fdb92e" opacity="0.75"/>
+                              <rect x="35" y="17" width="4" height="9" fill="#fdb92e" opacity="0.75"/>
+                              <rect x="51" y="17" width="4" height="9" fill="#fdb92e" opacity="0.75"/>
+                              <rect x="12" y="29" width="58" height="23" rx="2" fill="#fff8e6"/>
+                              <rect x="12" y="29" width="58" height="4" fill="#fdb92e"/>
+                              <circle cx="30" cy="44" r="6" fill="#e7572f"/>
+                              <circle cx="30" cy="44" r="3.5" fill="#fdb92e"/>
+                              <rect x="43" y="36" width="8" height="13" rx="2" fill="#3d0082"/>
+                              <rect x="55" y="37" width="9" height="11" rx="2" fill="#e7572f" opacity="0.6"/>
+                              <rect x="10" y="50" width="62" height="5" rx="1" fill="#fdb92e"/>
+                              <rect x="5" y="60" width="107" height="5" rx="2" fill="#a83a1a"/>
+                              <circle cx="27" cy="70" r="12" fill="#1a0040"/>
+                              <circle cx="27" cy="70" r="7.5" fill="#3d0082"/>
+                              <circle cx="27" cy="70" r="3" fill="#fdb92e"/>
+                              <line x1="27" y1="62.5" x2="27" y2="77.5" stroke="#5b21b6" strokeWidth="1.5"/>
+                              <line x1="19.5" y1="70" x2="34.5" y2="70" stroke="#5b21b6" strokeWidth="1.5"/>
+                              <circle cx="88" cy="70" r="12" fill="#1a0040"/>
+                              <circle cx="88" cy="70" r="7.5" fill="#3d0082"/>
+                              <circle cx="88" cy="70" r="3" fill="#fdb92e"/>
+                              <line x1="88" y1="62.5" x2="88" y2="77.5" stroke="#5b21b6" strokeWidth="1.5"/>
+                              <line x1="80.5" y1="70" x2="95.5" y2="70" stroke="#5b21b6" strokeWidth="1.5"/>
+                              <rect x="99" y="10" width="5" height="13" rx="2.5" fill="#555"/>
+                              <ellipse cx="101.5" cy="10" rx="4" ry="3" fill="#888" opacity="0.5"/>
+                              <ellipse cx="104" cy="7" rx="3" ry="2" fill="#aaa" opacity="0.3"/>
+                            </svg>
+                          ),
+                        },
+                        {
+                          value: "tent", label: "Tent Setup",
+                          svg: (
+                            <svg viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-20 h-16">
+                              <polygon points="50,6 3,47 97,47" fill="#3d0082"/>
+                              <polygon points="50,6 3,47 24,47" fill="#2d0060" opacity="0.25"/>
+                              <rect x="3" y="44" width="94" height="7" rx="2" fill="#fdb92e"/>
+                              <rect x="3" y="51" width="24" height="31" fill="#4a009a"/>
+                              <rect x="73" y="51" width="24" height="31" fill="#4a009a"/>
+                              <path d="M27 51 Q37 70 27 82" fill="#3d0082" opacity="0.45"/>
+                              <path d="M73 51 Q63 70 73 82" fill="#3d0082" opacity="0.45"/>
+                              <rect x="33" y="67" width="34" height="5" rx="1" fill="#fdb92e"/>
+                              <rect x="36" y="72" width="3" height="10" fill="#c9901a"/>
+                              <rect x="61" y="72" width="3" height="10" fill="#c9901a"/>
+                              <rect x="37" y="61" width="8" height="6" rx="1" fill="#e7572f"/>
+                              <rect x="47" y="62" width="7" height="5" rx="1" fill="#fdb92e"/>
+                              <rect x="56" y="61" width="8" height="6" rx="1" fill="#da0b85"/>
+                              <path d="M10 32 Q50 22 90 32" stroke="#fdb92e" strokeWidth="1" fill="none" opacity="0.7"/>
+                              <polygon points="17,22 23,34 11,34" fill="#e7572f"/>
+                              <polygon points="32,14 38,26 26,26" fill="#fdb92e"/>
+                              <polygon points="50,8 56,20 44,20" fill="#22c55e" opacity="0.9"/>
+                              <polygon points="68,14 74,26 62,26" fill="#e7572f"/>
+                              <polygon points="83,22 89,34 77,34" fill="#fdb92e"/>
+                            </svg>
+                          ),
+                        },
+                      ] as const).map((opt) => (
                         <label key={opt.value}
-                          className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 cursor-pointer transition-all ${field.value === opt.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                          className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 cursor-pointer transition-all ${field.value === opt.value ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/40"}`}>
                           <RadioGroupItem value={opt.value} className="sr-only" />
-                          <span className="text-3xl">{opt.icon}</span>
+                          {opt.svg}
                           <span className="font-semibold text-sm text-foreground">{opt.label}</span>
                         </label>
                       ))}
