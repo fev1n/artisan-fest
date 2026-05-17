@@ -41,16 +41,16 @@ async function sendAdminNotificationEmail(app: VendorApplication): Promise<void>
   const { Resend } = await import("resend");
   const resend = new Resend(resendApiKey);
 
+  const isFood = app.applicantType === "food";
   const body = [
-    `New vendor application received — #${app.id}`,
+    `New ${isFood ? "food vendor" : "artisan vendor"} application received — #${app.id}`,
     ``,
     `Name:       ${app.firstName} ${app.lastName}`,
     `Business:   ${app.businessName ?? "—"}`,
     `Email:      ${app.emailAddress}`,
     `Phone:      ${app.phoneNumber}`,
-    `City:       ${app.city}, ${app.province}`,
+    ...(isFood ? [`Setup:      ${app.setupType === "truck" ? "Food Truck" : "Tent Setup"}`] : [`City:       ${app.city}, ${app.province}`]),
     `Categories: ${app.productCategories}`,
-    `Food Vendor: ${app.isArtisanFoodVendor === "yes" ? "Yes" : "No"}`,
     ``,
     `Description:`,
     app.productDescription,
@@ -120,12 +120,11 @@ router.post("/applications", (req, res, next) => {
 }, async (req: Request, res: Response): Promise<void> => {
   const body = req.body;
 
-  const required = [
-    "firstName", "lastName", "streetAddress", "city", "province",
-    "postalCode", "phoneNumber", "emailAddress", "productCategories",
-    "productDescription", "artistBio", "isArtisanFoodVendor",
-    "grantPromoPermission", "agreeToTerms",
-  ];
+  const isFood = body.applicantType === "food";
+
+  const required = isFood
+    ? ["firstName", "lastName", "phoneNumber", "emailAddress", "productDescription", "setupType", "grantPromoPermission", "agreeToTerms"]
+    : ["firstName", "lastName", "streetAddress", "city", "province", "postalCode", "phoneNumber", "emailAddress", "productCategories", "productDescription", "artistBio", "isArtisanFoodVendor", "grantPromoPermission", "agreeToTerms"];
 
   for (const field of required) {
     if (!body[field]) {
@@ -172,10 +171,10 @@ router.post("/applications", (req, res, next) => {
       firstName: body.firstName,
       lastName: body.lastName,
       businessName: body.businessName || null,
-      streetAddress: body.streetAddress,
-      city: body.city,
-      province: body.province,
-      postalCode: body.postalCode,
+      streetAddress: isFood ? "N/A" : body.streetAddress,
+      city: isFood ? "N/A" : body.city,
+      province: isFood ? "N/A" : body.province,
+      postalCode: isFood ? "N/A" : body.postalCode,
       phoneNumber: body.phoneNumber,
       emailAddress: body.emailAddress,
       website: body.website || null,
@@ -183,12 +182,14 @@ router.post("/applications", (req, res, next) => {
       facebook: body.facebook || null,
       onlineStore: body.onlineStore || null,
       otherSocialMedia: body.otherSocialMedia || null,
-      productCategories: body.productCategories,
+      productCategories: isFood ? "Artisan Food" : body.productCategories,
       productDescription: body.productDescription,
-      artistBio: body.artistBio,
-      isArtisanFoodVendor: body.isArtisanFoodVendor,
+      artistBio: isFood ? "" : body.artistBio,
+      isArtisanFoodVendor: isFood ? "yes" : body.isArtisanFoodVendor,
       grantPromoPermission: body.grantPromoPermission,
       agreeToTerms: body.agreeToTerms,
+      applicantType: body.applicantType || "artisan",
+      setupType: body.setupType || null,
       logoFileName,
       photoFileNames,
     }).returning();

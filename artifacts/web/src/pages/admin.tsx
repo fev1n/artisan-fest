@@ -53,6 +53,8 @@ type Application = {
   photoFileNames: string | null;
   grantPromoPermission: string;
   agreeToTerms: string;
+  applicantType: string | null;
+  setupType: string | null;
 };
 
 type Summary = {
@@ -72,7 +74,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -198,10 +200,24 @@ function DetailDrawer({ app, onClose, token }: { app: Application; onClose: () =
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-5 space-y-1">
-          <p className="text-xs text-muted-foreground mb-3">
-            Submitted: {new Date(app.submittedAt).toLocaleString()}
-            {" · "}Food Vendor: <strong>{app.isArtisanFoodVendor === "yes" ? "Yes" : "No"}</strong>
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-xs text-muted-foreground">
+              Submitted: {new Date(app.submittedAt).toLocaleString()}
+            </span>
+            <Badge className={app.applicantType === "food" ? "bg-orange-100 text-orange-700 border-orange-200 text-xs" : "bg-primary/10 text-primary border-primary/20 text-xs"}>
+              {app.applicantType === "food" ? "🍽 Food Vendor" : "🎨 Artisan Vendor"}
+            </Badge>
+            {app.applicantType === "food" && app.setupType && (
+              <Badge className="bg-muted text-muted-foreground border-border text-xs">
+                {app.setupType === "truck" ? "🚚 Food Truck" : "⛺ Tent Setup"}
+              </Badge>
+            )}
+            {app.applicantType !== "food" && (
+              <span className="text-xs text-muted-foreground">
+                Food Vendor: <strong>{app.isArtisanFoodVendor === "yes" ? "Yes" : "No"}</strong>
+              </span>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-x-6">
             <Field label="Email" value={app.emailAddress} />

@@ -24,6 +24,8 @@ export const vendorApplicationsTable = pgTable("vendor_applications", {
   isArtisanFoodVendor: text("is_artisan_food_vendor").notNull(),
   grantPromoPermission: text("grant_promo_permission").notNull(),
   agreeToTerms: text("agree_to_terms").notNull(),
+  applicantType: text("applicant_type"),
+  setupType: text("setup_type"),
   logoFileName: text("logo_file_name"),
   photoFileNames: text("photo_file_names"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
