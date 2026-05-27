@@ -238,6 +238,7 @@ const Navbar = () => {
   const links = [
     { name: "About", href: "about" },
     { name: "Vendors", href: "vendors" },
+    { name: "Vendor List", href: "vendor-list" },
     { name: "Location", href: "location" },
   ];
 
@@ -431,7 +432,47 @@ const VendorCallout = () => {
   );
 };
 
+// ── Vendor List ───────────────────────────────────────────────────────────────
 
+const VendorList = () => {
+  const noMotion = useReducedMotion();
+  const vendors = [
+    { name: "HappyHueFaces", logo: "/vendors/HappyHueFaces.jpeg" },
+    { name: "Luv Loop Craft", logo: "/vendors/LuvLoop.jpg" },
+    { name: "Mia's", logo: "/vendors/Mias.jpg" },
+    { name: "Save-The-Bread Social Enterprise", logo: "/vendors/SaveTheBread.webp" },
+    { name: "Tinsel & Tatts", logo: "/vendors/TinselAndTatts.jpeg" },
+  ];
+
+  return (
+    <section id="vendor-list" className="py-24 bg-white">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="max-w-2xl mx-auto text-center mb-14">
+          <h2 className="text-5xl md:text-6xl font-[Caveat] text-[#e7572f] mb-5">Vendor Lineup</h2>
+          <p className="text-lg font-sans text-[#3d0082]/75 leading-relaxed">
+            Meet the artists, makers, and businesses joining us at the festival.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 max-w-5xl mx-auto">
+          {vendors.map((vendor, i) => (
+            <motion.div key={i}
+              initial={noMotion ? {} : { opacity: 0, y: 16 }}
+              whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: noMotion ? 0 : i * 0.08 }}
+              className="flex flex-col items-center gap-3">
+              <div className="w-full aspect-square rounded-2xl overflow-hidden border-2 border-[#fdb92e] shadow-md bg-[#fafafa]">
+                <img src={vendor.logo} alt={vendor.name} className="w-full h-full object-cover" />
+              </div>
+              <p className="font-[Caveat] text-lg text-[#3d0082] text-center leading-tight">{vendor.name}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 // ── Sponsors ──────────────────────────────────────────────────────────────────
 
@@ -515,6 +556,7 @@ export default function Home() {
         <Hero />
         <About />
         <VendorCallout />
+        <VendorList />
         <Sponsors />
         <Location />
       </main>
