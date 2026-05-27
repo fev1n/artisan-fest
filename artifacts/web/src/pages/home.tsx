@@ -454,33 +454,32 @@ const VendorList = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 max-w-5xl mx-auto items-start">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 max-w-5xl mx-auto items-start">
           {vendors.map((vendor, i) => (
             <motion.div key={i}
               initial={noMotion ? {} : { opacity: 0, y: 16 }}
               whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: noMotion ? 0 : i * 0.08 }}
-              className="flex flex-col items-center gap-3">
-              <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#fafafa]" style={{ boxShadow: "0 2px 12px 0 rgba(61,0,130,0.10)" }}>
+              whileHover={noMotion ? {} : { y: -4, scale: 1.03 }}
+              className="flex flex-col items-center gap-3 cursor-default">
+              <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#fafafa]"
+                style={{ boxShadow: "0 2px 12px 0 rgba(61,0,130,0.10)", border: "1.5px solid rgba(61,0,130,0.12)" }}>
                 <img src={vendor.logo} alt={vendor.name} className="w-full h-full object-cover" />
               </div>
               <p className="font-[Caveat] text-lg text-[#3d0082] text-center leading-tight">{vendor.name}</p>
             </motion.div>
           ))}
-
-          <motion.div
-            initial={noMotion ? {} : { opacity: 0, y: 16 }}
-            whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: noMotion ? 0 : vendors.length * 0.08 }}
-            className="flex flex-col items-center gap-3">
-            <div className="w-full aspect-square rounded-2xl bg-[#3d0082] flex items-center justify-center" style={{ boxShadow: "0 2px 12px 0 rgba(61,0,130,0.10)" }}>
-              <span className="font-[Caveat] text-white text-center text-2xl leading-snug px-3">& many<br/>more!</span>
-            </div>
-            <p className="font-[Caveat] text-lg text-[#3d0082] text-center leading-tight opacity-0 select-none">·</p>
-          </motion.div>
         </div>
+
+        <motion.p
+          initial={noMotion ? {} : { opacity: 0, y: 10 }}
+          whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: noMotion ? 0 : vendors.length * 0.08 + 0.1 }}
+          className="text-center font-[Caveat] text-2xl text-[#3d0082]/50 mt-10 tracking-wide">
+          & many more to be announced ✦
+        </motion.p>
       </div>
     </section>
   );
