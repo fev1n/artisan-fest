@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import ExcelJS from "exceljs";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 import { db, vendorApplicationsTable, emailSettingsTable } from "@workspace/db";
 import { desc, eq, ilike, or } from "drizzle-orm";
 import { logger } from "../lib/logger";
@@ -30,14 +31,40 @@ function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   next();
 }
 
-router.post("/admin/login", (req: Request, res: Response): void => {
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: { error: "Too many login attempts. Try again in 15 minutes." },
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+});
+
+router.post("/admin/reset-lockout", (req: Request, res: Response): void => {
+  const { secret } = req.body;
+  const resetKey = process.env.RATE_LIMIT_RESET_KEY;
+  if (!resetKey || secret !== resetKey) {
+    res.status(401).json({ error: "Invalid reset key" });
+    return;
+  }
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0] ?? req.socket.remoteAddress ?? "";
+  loginRateLimit.resetKey(ip);
+  res.json({ ok: true });
+});
+
+router.post("/admin/login", loginRateLimit, (req: Request, res: Response): void => {
   const { password } = req.body;
   const expectedPassword = process.env.ADMIN_PASSWORD;
   if (!expectedPassword) {
     res.status(500).json({ error: "Server misconfiguration: ADMIN_PASSWORD not set" });
     return;
   }
-  if (password !== expectedPassword) {
+
+  const bufA = Buffer.from(String(password ?? ""));
+  const bufB = Buffer.from(expectedPassword);
+  const match = bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+
+  if (!match) {
     res.status(401).json({ error: "Invalid password" });
     return;
   }
@@ -66,7 +93,7 @@ router.get("/admin/applications", requireAdmin, async (req: Request, res: Respon
   res.json(applications);
 });
 
-router.get("/admin/applications/export", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.get("/admin/applications/export", requireAdmin, async (_req: Request, res: Response): Promise<void> => {
   const applications = await db
     .select()
     .from(vendorApplicationsTable)

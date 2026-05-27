@@ -73,6 +73,10 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [resetKey, setResetKey] = useState("");
+  const [resetMsg, setResetMsg] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,6 +89,11 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         body: JSON.stringify({ password }),
       });
       const data = await res.json();
+      if (res.status === 429) {
+        setBlocked(true);
+        setError(data.error || "Too many attempts. Enter your reset key below to unblock.");
+        return;
+      }
       if (!res.ok) {
         setError(data.error || "Invalid password");
         return;
@@ -95,6 +104,31 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
       setError("Connection error. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleReset(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setResetting(true);
+    setResetMsg("");
+    try {
+      const res = await fetch(`${BASE}/api/admin/reset-lockout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: resetKey }),
+      });
+      if (res.ok) {
+        setBlocked(false);
+        setError("");
+        setResetKey("");
+        setResetMsg("Unblocked! You can try logging in again.");
+      } else {
+        setResetMsg("Invalid reset key.");
+      }
+    } catch {
+      setResetMsg("Connection error.");
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -117,13 +151,30 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
+                disabled={blocked}
               />
             </div>
             {error && <p className="text-sm text-destructive font-medium">{error}</p>}
-            <Button type="submit" className="w-full bg-primary hover:bg-secondary hover:text-secondary-foreground font-semibold" disabled={loading}>
+            {resetMsg && <p className="text-sm text-green-600 font-medium">{resetMsg}</p>}
+            <Button type="submit" className="w-full bg-primary hover:bg-secondary hover:text-secondary-foreground font-semibold" disabled={loading || blocked}>
               {loading ? "Signing in…" : "Sign In"}
             </Button>
           </form>
+
+          {blocked && (
+            <form onSubmit={handleReset} className="mt-5 space-y-3 border-t pt-4">
+              <p className="text-xs text-muted-foreground">Enter your reset key to unblock your IP:</p>
+              <Input
+                type="password"
+                placeholder="Reset key"
+                value={resetKey}
+                onChange={(e) => setResetKey(e.target.value)}
+              />
+              <Button type="submit" variant="outline" className="w-full" disabled={resetting || !resetKey}>
+                {resetting ? "Unblocking…" : "Unblock My IP"}
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
