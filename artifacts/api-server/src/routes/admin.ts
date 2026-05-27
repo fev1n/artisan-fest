@@ -47,8 +47,7 @@ router.post("/admin/reset-lockout", (req: Request, res: Response): void => {
     res.status(401).json({ error: "Invalid reset key" });
     return;
   }
-  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0] ?? req.socket.remoteAddress ?? "";
-  loginRateLimit.resetKey(ip);
+  loginRateLimit.resetKey(req.ip ?? "");
   res.json({ ok: true });
 });
 
