@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  LogOut, Download, Search, Eye, Users, UtensilsCrossed, FileSpreadsheet,
+  LogOut, Download, Search, Eye, EyeOff, Users, UtensilsCrossed, FileSpreadsheet,
   Mail, Save, RefreshCw, ChevronRight, X, Info,
 } from "lucide-react";
 
@@ -71,10 +71,12 @@ type EmailSettings = { subject: string; body: string };
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [resetKey, setResetKey] = useState("");
+  const [showResetKey, setShowResetKey] = useState(false);
   const [resetMsg, setResetMsg] = useState("");
   const [resetting, setResetting] = useState(false);
 
@@ -145,14 +147,21 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-semibold text-foreground">Admin Password</label>
-              <Input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoFocus
-                disabled={blocked}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoFocus
+                  disabled={blocked}
+                  className="pr-10"
+                />
+                <button type="button" onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             {error && <p className="text-sm text-destructive font-medium">{error}</p>}
             {resetMsg && <p className="text-sm text-green-600 font-medium">{resetMsg}</p>}
@@ -164,12 +173,19 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           {blocked && (
             <form onSubmit={handleReset} className="mt-5 space-y-3 border-t pt-4">
               <p className="text-xs text-muted-foreground">Enter your reset key to unblock your IP:</p>
-              <Input
-                type="password"
-                placeholder="Reset key"
-                value={resetKey}
-                onChange={(e) => setResetKey(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showResetKey ? "text" : "password"}
+                  placeholder="Reset key"
+                  value={resetKey}
+                  onChange={(e) => setResetKey(e.target.value)}
+                  className="pr-10"
+                />
+                <button type="button" onClick={() => setShowResetKey(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showResetKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               <Button type="submit" variant="outline" className="w-full" disabled={resetting || !resetKey}>
                 {resetting ? "Unblocking…" : "Unblock My IP"}
               </Button>
