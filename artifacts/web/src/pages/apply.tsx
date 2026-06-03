@@ -128,7 +128,6 @@ function ArtisanTermsPanel() {
           <section>
             <h3 className="text-lg font-sans font-bold text-primary mb-3">Application & Selection Process</h3>
             <ul className="list-disc pl-5 space-y-2 text-sm leading-relaxed">
-              <li>The deadline for application is Sunday, May 31, 2026.</li>
               <li>Accepted vendors will receive a confirmation email with payment instructions and next steps.</li>
               <li>Submission of an application does not guarantee acceptance.</li>
             </ul>
@@ -185,7 +184,6 @@ function FoodTermsPanel() {
           <section>
             <h3 className="text-lg font-sans font-bold text-primary mb-3">Application & Selection Process</h3>
             <ul className="list-disc pl-5 space-y-2 text-sm leading-relaxed">
-              <li>The deadline for application is Sunday, May 31, 2026.</li>
               <li>Accepted vendors will receive a confirmation email with payment instructions and next steps.</li>
               <li>Submission of an application does not guarantee acceptance.</li>
             </ul>

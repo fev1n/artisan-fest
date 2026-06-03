@@ -405,17 +405,11 @@ const VendorCallout = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-5 mb-14 max-w-2xl mx-auto">
-          {[
-            { label: "Application Deadline", value: "May 30", highlight: true },
-            { label: "Vendor Fee", value: "$100 + HST", highlight: false },
-          ].map((d, i) => (
-            <motion.div key={i} {...anim}
-              className={`bg-white p-8 rounded-3xl text-center shadow-lg ${d.highlight ? "border-4 border-[#fdb92e] md:-translate-y-3" : ""}`}>
-              <h3 className={`font-[Caveat] text-[#3d0082] mb-2 ${d.highlight ? "text-2xl" : "text-xl"}`}>{d.label}</h3>
-              <p className={`font-sans font-bold ${d.highlight ? "text-2xl text-[#e7572f]" : "text-xl text-[#3d0082]"}`}>{d.value}</p>
-            </motion.div>
-          ))}
+        <div className="flex justify-center mb-14">
+          <motion.div {...anim} className="bg-white p-8 rounded-3xl text-center shadow-lg">
+            <h3 className="font-[Caveat] text-[#3d0082] mb-2 text-xl">Vendor Fee</h3>
+            <p className="font-sans font-bold text-xl text-[#3d0082]">$100 + HST</p>
+          </motion.div>
         </div>
 
         <motion.div {...anim} className="text-center">
