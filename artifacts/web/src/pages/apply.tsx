@@ -192,7 +192,7 @@ function FoodTermsPanel() {
           <section>
             <h3 className="text-lg font-sans font-bold text-primary mb-3">Booth Fees & Payment Policy</h3>
             <ul className="list-disc pl-5 space-y-2 text-sm leading-relaxed">
-              <li>Vendor Fee: $350 + HST</li>
+              <li>Vendor Fee: $175 + HST</li>
               <li>Booth space is not confirmed until payment is received in full</li>
               <li>Booth fees are non-refundable</li>
               <li>The event will proceed rain or shine</li>
@@ -922,7 +922,7 @@ export default function Apply() {
 
         {/* Fee banner */}
         <div className={`text-center text-sm font-semibold rounded-full py-2 px-6 mx-auto w-fit ${vendorType === "food" ? "bg-secondary/20 text-secondary-foreground" : "bg-primary/10 text-primary"}`}>
-          {vendorType === "artisan" ? "Vendor Fee: $100 + HST" : "Vendor Fee: $350 + HST"}
+          {vendorType === "artisan" ? "Vendor Fee: $100 + HST" : "Vendor Fee: $175 + HST"}
         </div>
 
         {/* Two-Column Layout */}
