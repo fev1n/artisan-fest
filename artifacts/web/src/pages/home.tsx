@@ -436,6 +436,21 @@ const VendorList = () => {
     { name: "Mia's", logo: "/vendors/Mias.jpg" },
     { name: "Save-The-Bread Social Enterprise", logo: "/vendors/SaveTheBread.webp" },
     { name: "Tinsel & Tatts", logo: "/vendors/TinselAndTatts.jpeg" },
+    { name: "Crzy Craft", logo: "/vendors/CrzyCrft.jpeg" },
+    { name: "Ethnic Origins Soap & Spa Products", logo: "/vendors/EthnicOriginsSoap&SpaProducts.jpeg" },
+    { name: "Gsemma Printing Service", logo: "/vendors/GsemmaPrinitingService.jpeg" },
+    { name: "Huron Soap Company", logo: "/vendors/HuronSoapCompany.jpg" },
+    { name: "Kandle Bakerie", logo: "/vendors/KandleBakerie.jpeg" },
+    { name: "KoBo Bakehouse", logo: "/vendors/KoBoBakehouse.png" },
+    { name: "Liliana McCann", logo: "/vendors/LilianaMcCann.png" },
+    { name: "Marlows Blue Tique", logo: "/vendors/MarlowsBlueTique.jpeg" },
+    { name: "Michelle Pfeiffer", logo: "/vendors/MichellePfeiffer.jpg" },
+    { name: "NaAn", logo: "/vendors/NaAn.jpeg" },
+    { name: "Sparkle By Elieen", logo: "/vendors/SparkleByElieen.jpeg" },
+    { name: "Swurl", logo: "/vendors/Swurl.jpeg" },
+    { name: "The Hook & Thread Shop", logo: "/vendors/TheHookThreadShop.jpeg" },
+    { name: "Trendsaac Inc.", logo: "/vendors/TrendsaacInc.jpg" },
+    { name: "Valerie Armada", logo: "/vendors/ValerieArmada.jpeg" },
   ];
 
   return (
