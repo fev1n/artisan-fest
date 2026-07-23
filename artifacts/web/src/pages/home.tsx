@@ -451,7 +451,7 @@ const VendorList = () => {
     { name: "The Hook & Thread Shop", logo: "/vendors/TheHookThreadShop.jpeg" },
     { name: "Trendsaac Inc.", logo: "/vendors/TrendsaacInc.jpg" },
     { name: "Valerie Armada", logo: "/vendors/ValerieArmada.jpeg" },
-    { name: "Spoon Zee", logo: "/vendors/SpoonZee.jpeg" },
+    { name: "Spoon Zee", logo: "/vendors/SpoonZee.png" },
   ];
 
   return (
