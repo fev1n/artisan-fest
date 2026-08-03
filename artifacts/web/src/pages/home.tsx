@@ -321,6 +321,14 @@ const Hero = () => (
           <span className="block text-7xl md:text-9xl lg:text-[10rem] text-[#fdb92e] tracking-tight">FESTIVAL</span>
         </h1>
 
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-8 text-[#3d0082]/70">
+          <span className="text-sm md:text-base font-sans font-semibold uppercase tracking-[0.25em]">Sponsored by</span>
+          <a href="https://spoonzee.ca" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center rounded-full border border-[#3d0082]/10 bg-white/80 px-4 py-2 shadow-sm hover:shadow-md transition-shadow">
+            <img src="/vendors/SpoonZee.png" alt="Spoon Zee" className="h-8 w-auto object-contain" />
+          </a>
+        </div>
+
         {/* Mobile-only static info cards with bobbing animation */}
         <div className="md:hidden">
           <MobileInfoBar />
