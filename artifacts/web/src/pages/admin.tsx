@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   LogOut, Download, Search, Eye, EyeOff, Users, UtensilsCrossed, FileSpreadsheet,
-  Mail, Save, RefreshCw, ChevronRight, X, Info,
+  Mail, Save, RefreshCw, ChevronRight, X, Info, MicVocal,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -55,6 +55,29 @@ type Application = {
   agreeToTerms: string;
   applicantType: string | null;
   setupType: string | null;
+};
+
+type PerformerApplication = {
+  id: number;
+  submittedAt: string;
+  performerName: string;
+  performanceType: string;
+  genre: string;
+  contactPersonName: string;
+  emailAddress: string;
+  phoneNumber: string;
+  performanceDescription: string;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  otherMediaLink: string | null;
+  requiresCompensation: string;
+  performanceFee: string | null;
+  logoFileName: string | null;
+  photoFileNames: string | null;
+  videoLink: string;
+  agreeToTerms: string;
+  agreeToPaSystem: string;
 };
 
 type Summary = {
@@ -486,6 +509,199 @@ function ResponsesTab({ token }: { token: string }) {
   );
 }
 
+function PerformerDetailDrawer({ app, onClose }: { app: PerformerApplication; onClose: () => void }) {
+  const Field = ({ label, value }: { label: string; value?: string | null }) =>
+    value ? (
+      <div className="py-2 border-b border-border/40 last:border-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">{label}</p>
+        <p className="text-sm text-foreground whitespace-pre-wrap">{value}</p>
+      </div>
+    ) : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="w-full max-w-xl bg-card shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-primary text-primary-foreground">
+          <div>
+            <p className="font-bold text-lg">{app.performerName}</p>
+            <p className="text-sm opacity-80">Contact: {app.contactPersonName}</p>
+          </div>
+          <button onClick={onClose} className="ml-2 p-1 rounded hover:bg-white/20">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-1">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-xs text-muted-foreground">
+              Submitted: {new Date(app.submittedAt).toLocaleString()}
+            </span>
+            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+              {app.performanceType}
+            </Badge>
+            <Badge className="bg-muted text-muted-foreground border-border text-xs">
+              {app.genre}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-6">
+            <Field label="Email" value={app.emailAddress} />
+            <Field label="Phone" value={app.phoneNumber} />
+          </div>
+
+          <Field label="Performance Description" value={app.performanceDescription} />
+          <Field label="Video Link" value={app.videoLink} />
+          <Field label="Requires Compensation" value={app.requiresCompensation === "yes" ? "Yes" : "No"} />
+          <Field label="Performance Fee" value={app.performanceFee} />
+
+          {(app.website || app.instagram || app.facebook || app.otherMediaLink) && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 mt-2">Online Presence</p>
+              <div className="space-y-0.5">
+                {app.website && <p className="text-sm"><span className="font-medium">Website:</span> {app.website}</p>}
+                {app.instagram && <p className="text-sm"><span className="font-medium">Instagram:</span> {app.instagram}</p>}
+                {app.facebook && <p className="text-sm"><span className="font-medium">Facebook:</span> {app.facebook}</p>}
+                {app.otherMediaLink && <p className="text-sm"><span className="font-medium">Other:</span> {app.otherMediaLink}</p>}
+              </div>
+            </div>
+          )}
+
+          {app.photoFileNames && (
+            <div className="py-2 border-b border-border/40">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Submitted Photos</p>
+              <div className="grid grid-cols-3 gap-2">
+                {app.photoFileNames.split(",").map((url, i) => (
+                  <a key={i} href={url.trim()} target="_blank" rel="noopener noreferrer" className="block">
+                    <img
+                      src={url.trim()}
+                      alt={`Performer photo ${i + 1}`}
+                      className="w-full aspect-square object-cover rounded-md border border-border hover:opacity-75 transition-opacity"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {app.logoFileName && (
+            <div className="py-2 border-b border-border/40 last:border-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Logo</p>
+              <a href={app.logoFileName} target="_blank" rel="noopener noreferrer" className="inline-block">
+                <img
+                  src={app.logoFileName}
+                  alt="Performer logo"
+                  className="h-20 w-auto object-contain rounded-md border border-border hover:opacity-75 transition-opacity"
+                />
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PerformerResponsesTab() {
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selected, setSelected] = useState<PerformerApplication | null>(null);
+
+  const debounce = useCallback((val: string) => {
+    const t = setTimeout(() => setDebouncedSearch(val), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  function handleSearch(val: string) {
+    setSearch(val);
+    debounce(val);
+  }
+
+  const { data: applications = [], isLoading, refetch } = useQuery<PerformerApplication[]>({
+    queryKey: ["admin-performer-applications", debouncedSearch],
+    queryFn: async () => {
+      const params = debouncedSearch ? `?search=${encodeURIComponent(debouncedSearch)}` : "";
+      const res = await apiFetch(`/admin/performer-applications${params}`);
+      if (!res.ok) throw new Error("Unauthorized");
+      return res.json();
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by performer, contact, email…"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button size="sm" variant="outline" onClick={() => refetch()} className="gap-1.5">
+          <RefreshCw className="w-4 h-4" /> Refresh
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-16 text-muted-foreground">Loading performer submissions…</div>
+      ) : applications.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          {debouncedSearch ? "No performer submissions match your search." : "No performer submissions yet."}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-primary text-primary-foreground">
+                  <th className="text-left px-4 py-3 font-semibold">#</th>
+                  <th className="text-left px-4 py-3 font-semibold">Date</th>
+                  <th className="text-left px-4 py-3 font-semibold">Performer</th>
+                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Type</th>
+                  <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Contact</th>
+                  <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Email</th>
+                  <th className="text-right px-4 py-3 font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {applications.map((app, i) => (
+                  <tr
+                    key={app.id}
+                    className={`border-t border-border hover:bg-muted/40 cursor-pointer transition-colors ${i % 2 === 0 ? "" : "bg-muted/20"}`}
+                    onClick={() => setSelected(app)}
+                  >
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{i + 1}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                      {new Date(app.submittedAt).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 font-medium">{app.performerName}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{app.performanceType}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">{app.contactPersonName}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">{app.emailAddress}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button className="text-primary hover:text-accent transition-colors flex items-center gap-1 ml-auto text-xs font-semibold">
+                        <Eye className="w-3.5 h-3.5" /> View <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-2 border-t border-border bg-muted/20 text-xs text-muted-foreground">
+            {applications.length} performer submission{applications.length !== 1 ? "s" : ""}
+            {debouncedSearch && " matching your search"}
+          </div>
+        </div>
+      )}
+
+      {selected && <PerformerDetailDrawer app={selected} onClose={() => setSelected(null)} />}
+    </div>
+  );
+}
+
 // ─── Summary Tab ──────────────────────────────────────────────────────────────
 
 const CHART_COLORS = ["#3D0082", "#FDB92E", "#FF724F", "#DA0B85", "#6B21A8", "#D97706", "#DC2626", "#7C3AED"];
@@ -747,7 +963,7 @@ function EmailSettingsTab() {
 
 // ─── Main Admin Dashboard ─────────────────────────────────────────────────────
 
-type Tab = "responses" | "summary" | "email";
+type Tab = "responses" | "performers" | "summary" | "email";
 
 export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem("admin_token") || "");
@@ -766,6 +982,7 @@ export default function Admin() {
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "responses", label: "Responses", icon: <Users className="w-4 h-4" /> },
+    { id: "performers", label: "Performers", icon: <MicVocal className="w-4 h-4" /> },
     { id: "summary", label: "Summary", icon: <FileSpreadsheet className="w-4 h-4" /> },
     { id: "email", label: "Email Settings", icon: <Mail className="w-4 h-4" /> },
   ];
@@ -807,6 +1024,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-6 py-6">
         {tab === "responses" && <ResponsesTab token={token} />}
+        {tab === "performers" && <PerformerResponsesTab />}
         {tab === "summary" && <SummaryTab />}
         {tab === "email" && <EmailSettingsTab />}
       </main>

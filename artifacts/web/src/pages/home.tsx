@@ -327,13 +327,13 @@ const Hero = () => (
             href="https://spoonzee.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center justify-center rounded-2xl border border-[#3d0082]/10 bg-white px-6 md:px-8 py-4 md:py-5 shadow-[0_8px_24px_rgba(61,0,130,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(61,0,130,0.2)]"
+            className="group inline-flex items-center justify-center px-2 py-1 transition-transform duration-300 hover:scale-[1.02]"
             aria-label="Visit Spoonzee sponsor website"
           >
             <img
-              src="/sponsors/spoonzee-logo.png"
+              src="/sponsors/spoonzee-logo-transparent.png"
               alt="Spoonzee"
-              className="h-14 md:h-20 w-auto object-contain"
+              className="h-16 md:h-24 w-auto object-contain"
             />
           </a>
         </div>

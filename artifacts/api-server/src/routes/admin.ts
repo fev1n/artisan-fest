@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response, type NextFunction } 
 import ExcelJS from "exceljs";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
-import { db, vendorApplicationsTable, emailSettingsTable } from "@workspace/db";
+import { db, vendorApplicationsTable, performerApplicationsTable, emailSettingsTable } from "@workspace/db";
 import { desc, eq, ilike, or } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
@@ -240,6 +240,38 @@ router.get("/admin/applications/:id/export", requireAdmin, async (req: Request, 
 router.get("/admin/applications/:id", requireAdmin, async (req: Request, res: Response): Promise<void> => {
   const id = parseInt(req.params.id as string);
   const [app] = await db.select().from(vendorApplicationsTable).where(eq(vendorApplicationsTable.id, id));
+  if (!app) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json(app);
+});
+
+router.get("/admin/performer-applications", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  const { search } = req.query as { search?: string };
+
+  let query = db.select().from(performerApplicationsTable).$dynamic();
+
+  if (search && search.trim()) {
+    const term = `%${search.trim()}%`;
+    query = query.where(
+      or(
+        ilike(performerApplicationsTable.performerName, term),
+        ilike(performerApplicationsTable.contactPersonName, term),
+        ilike(performerApplicationsTable.emailAddress, term),
+        ilike(performerApplicationsTable.performanceType, term),
+        ilike(performerApplicationsTable.genre, term),
+      )
+    );
+  }
+
+  const applications = await query.orderBy(desc(performerApplicationsTable.submittedAt));
+  res.json(applications);
+});
+
+router.get("/admin/performer-applications/:id", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  const id = parseInt(req.params.id as string);
+  const [app] = await db.select().from(performerApplicationsTable).where(eq(performerApplicationsTable.id, id));
   if (!app) {
     res.status(404).json({ error: "Not found" });
     return;
