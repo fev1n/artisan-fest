@@ -261,6 +261,10 @@ const Navbar = () => {
             className="bg-[#e7572f] text-white px-5 py-2.5 rounded-full font-bold font-sans text-sm hover:bg-[#fdb92e] hover:text-[#3d0082] transition-all shadow-sm">
             Apply as Vendor
           </a>
+          <a href="/perform"
+            className="bg-[#3d0082] text-white px-5 py-2.5 rounded-full font-bold font-sans text-sm hover:bg-[#fdb92e] hover:text-[#3d0082] transition-all shadow-sm">
+            Apply as Performer
+          </a>
         </nav>
 
         <button className="lg:hidden p-2 text-[#3d0082]" onClick={() => setOpen(!open)}>
@@ -281,6 +285,11 @@ const Navbar = () => {
             className="bg-[#e7572f] text-white text-center px-5 py-3 rounded-full font-bold font-sans mt-1"
             onClick={() => setOpen(false)}>
             Apply as Vendor
+          </a>
+          <a href="/perform"
+            className="bg-[#3d0082] text-white text-center px-5 py-3 rounded-full font-bold font-sans mt-1"
+            onClick={() => setOpen(false)}>
+            Apply as Performer
           </a>
         </div>
       )}
@@ -325,6 +334,10 @@ const Hero = () => (
           <a href="/apply" data-testid="hero-apply-btn"
             className="w-full sm:w-auto bg-[#e7572f] text-white px-10 py-4 rounded-full font-bold font-sans text-lg hover:bg-[#fdb92e] hover:text-[#3d0082] transition-all shadow-lg text-center">
             Apply as Vendor
+          </a>
+          <a href="/perform" data-testid="hero-perform-btn"
+            className="w-full sm:w-auto bg-[#3d0082] text-white px-10 py-4 rounded-full font-bold font-sans text-lg hover:bg-[#fdb92e] hover:text-[#3d0082] transition-all shadow-lg text-center">
+            Apply as Performer
           </a>
           <a href="#about" onClick={(e) => scrollTo(e, "about")}
             className="w-full sm:w-auto border-2 border-[#3d0082] text-[#3d0082] hover:bg-[#3d0082] hover:text-white px-10 py-4 rounded-full font-bold font-sans text-lg transition-all text-center">
@@ -416,6 +429,10 @@ const VendorCallout = () => {
           <a href="/apply" data-testid="vendor-apply-btn"
             className="inline-block bg-[#fdb92e] text-[#3d0082] hover:bg-white px-12 py-5 rounded-full font-bold font-sans text-xl transition-all hover:scale-105 shadow-xl mb-6">
             Apply as a Vendor
+          </a>
+          <a href="/perform" data-testid="performer-apply-btn"
+            className="inline-block bg-white text-[#3d0082] hover:bg-[#fdb92e] px-12 py-5 rounded-full font-bold font-sans text-xl transition-all hover:scale-105 shadow-xl mb-6 ml-4">
+            Apply as a Performer
           </a>
           <p className="font-[Caveat] text-xl text-white/75 max-w-xl mx-auto">
             "Applications are reviewed to maintain a curated mix of quality, originality, and craftsmanship."

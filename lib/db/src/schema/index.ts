@@ -19,3 +19,4 @@
 
 export * from "./vendorApplications";
 export * from "./emailSettings";
+export * from "./performerApplications";
