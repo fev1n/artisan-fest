@@ -428,21 +428,53 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
     archive.pipe(res);
 
     const supabase = getSupabaseClient();
-    const bucket = type === "performers" ? "performer-uploads" : "vendor-uploads";
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
 
     for (const fileName of logoFileNames) {
       try {
+        // Extract just the path from the full URL
+        // Supabase public URLs are in format: https://.../storage/v1/object/public/bucket/path/to/file
+        let filePath = fileName;
+        if (fileName.startsWith("http")) {
+          const url = new URL(fileName);
+          // Extract the path after /object/public/bucket/
+          const pathParts = url.pathname.split("/");
+          // Find the bucket in the path (it should be after /object/public/)
+          const objectPublicIndex = pathParts.indexOf("object");
+          const publicIndex = pathParts.indexOf("public", objectPublicIndex);
+          if (objectPublicIndex >= 0 && publicIndex >= 0 && pathParts.length > publicIndex + 2) {
+            // The bucket should be at publicIndex + 1, and the file path starts at publicIndex + 2
+            const actualBucket = pathParts[publicIndex + 1];
+            if (actualBucket === bucket) {
+              filePath = pathParts.slice(publicIndex + 2).join("/");
+            } else {
+              // Bucket mismatch - try to find the bucket name in the path
+              const bucketIndex = pathParts.indexOf(bucket);
+              if (bucketIndex >= 0 && pathParts.length > bucketIndex + 1) {
+                filePath = pathParts.slice(bucketIndex + 1).join("/");
+              } else {
+                filePath = pathParts[pathParts.length - 1];
+              }
+            }
+          } else {
+            // Fallback: use the last part of the path
+            filePath = pathParts[pathParts.length - 1];
+          }
+        }
+
         const { data, error } = await supabase.storage
           .from(bucket)
-          .download(`logos/${fileName}`);
+          .download(filePath);
 
         if (error) {
-          logger.warn({ error: error.message, fileName }, "Failed to download logo from Supabase");
+          logger.warn({ error: error.message, fileName, filePath, bucket }, "Failed to download logo from Supabase");
           continue;
         }
 
         const buffer = await data.arrayBuffer();
-        archive.append(Buffer.from(buffer), { name: fileName });
+        // Use just the filename for the zip archive
+        const archiveName = filePath.split("/").pop() || fileName;
+        archive.append(Buffer.from(buffer), { name: archiveName });
       } catch (err) {
         logger.warn({ err, fileName }, "Failed to process logo file");
         continue;
