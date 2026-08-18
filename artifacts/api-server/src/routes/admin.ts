@@ -2,6 +2,9 @@ import { Router, type IRouter, type Request, type Response, type NextFunction } 
 import ExcelJS from "exceljs";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
+// @ts-ignore - ZipArchive is exported but types may not be available
+import { ZipArchive } from "archiver";
+import { createClient } from "@supabase/supabase-js";
 import { db, vendorApplicationsTable, performerApplicationsTable, emailSettingsTable } from "@workspace/db";
 import { desc, eq, ilike, or } from "drizzle-orm";
 import { logger } from "../lib/logger";
@@ -383,6 +386,238 @@ router.post("/admin/applications/:id/resend-email", requireAdmin, async (req: Re
   } catch (err) {
     logger.error({ err }, "Error sending email");
     res.status(500).json({ error: "Email service error" });
+  }
+});
+
+function getSupabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
+  return createClient(url, key);
+}
+
+router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { type = "vendors" } = req.query as { type?: "vendors" | "performers" };
+
+    if (type === "performers") {
+      const applications = await db
+        .select()
+        .from(performerApplicationsTable)
+        .orderBy(desc(performerApplicationsTable.submittedAt));
+
+      const supabase = getSupabaseClient();
+      const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
+
+      const logoUrls: string[] = [];
+      for (const app of applications) {
+        if (app.logoFileName) {
+          logoUrls.push(app.logoFileName);
+        }
+      }
+
+      if (logoUrls.length === 0) {
+        res.status(404).json({ error: "No performer logos found" });
+        return;
+      }
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="performer-logos-${new Date().toISOString().slice(0, 10)}.zip"`);
+
+      const archive = new ZipArchive();
+      archive.pipe(res);
+
+      for (const url of logoUrls) {
+        try {
+          const path = new URL(url).pathname.substring(1);
+          const { data, error } = await supabase.storage.from(bucket).download(path);
+
+          if (error) {
+            logger.warn({ error, url }, "Failed to download logo");
+            continue;
+          }
+
+          const fileName = path.split("/").pop() || "logo";
+          archive.append(data, { name: fileName });
+        } catch (err) {
+          logger.warn({ err, url }, "Failed to process logo URL");
+          continue;
+        }
+      }
+
+      await archive.finalize();
+    } else {
+      const applications = await db
+        .select()
+        .from(vendorApplicationsTable)
+        .orderBy(desc(vendorApplicationsTable.submittedAt));
+
+      const supabase = getSupabaseClient();
+      const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
+
+      const logoUrls: string[] = [];
+      for (const app of applications) {
+        if (app.logoFileName) {
+          logoUrls.push(app.logoFileName);
+        }
+      }
+
+      if (logoUrls.length === 0) {
+        res.status(404).json({ error: "No vendor logos found" });
+        return;
+      }
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="logos-${new Date().toISOString().slice(0, 10)}.zip"`);
+
+      const archive = new ZipArchive();
+      archive.pipe(res);
+
+      for (const url of logoUrls) {
+        try {
+          const path = new URL(url).pathname.substring(1);
+          const { data, error } = await supabase.storage.from(bucket).download(path);
+
+          if (error) {
+            logger.warn({ error, url }, "Failed to download logo");
+            continue;
+          }
+
+          const fileName = path.split("/").pop() || "logo";
+          archive.append(data, { name: fileName });
+        } catch (err) {
+          logger.warn({ err, url }, "Failed to process logo URL");
+          continue;
+        }
+      }
+
+      await archive.finalize();
+    }
+  } catch (err) {
+    logger.error({ err }, "Failed to create logos zip");
+    res.status(500).json({ error: "Failed to create zip file" });
+  }
+});
+
+router.get("/admin/download/csv", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { type = "vendors" } = req.query as { type?: "vendors" | "performers" };
+
+    if (type === "performers") {
+      const applications = await db
+        .select()
+        .from(performerApplicationsTable)
+        .orderBy(desc(performerApplicationsTable.submittedAt));
+
+      if (applications.length === 0) {
+        res.status(404).json({ error: "No performer applications found" });
+        return;
+      }
+
+      const headers = [
+        "ID", "Submitted At", "Performer Name", "Performance Type", "Genre", "Contact Name",
+        "Email", "Phone", "Performance Description", "Video Link", "Requires Compensation",
+        "Performance Fee", "Website", "Instagram", "Facebook", "Other Media Link",
+        "Logo URL", "Photo URLs", "Agreed to Terms", "Agreed to PA System"
+      ];
+
+      const rows = applications.map(app => [
+        app.id,
+        app.submittedAt ? new Date(app.submittedAt).toLocaleString() : "",
+        app.performerName,
+        app.performanceType,
+        app.genre,
+        app.contactPersonName,
+        app.emailAddress,
+        app.phoneNumber,
+        app.performanceDescription,
+        app.videoLink,
+        app.requiresCompensation === "yes" ? "Yes" : "No",
+        app.performanceFee ?? "",
+        app.website ?? "",
+        app.instagram ?? "",
+        app.facebook ?? "",
+        app.otherMediaLink ?? "",
+        app.logoFileName ?? "",
+        app.photoFileNames ?? "",
+        app.agreeToTerms === "true" ? "Yes" : "No",
+        app.agreeToPaSystem === "true" ? "Yes" : "No"
+      ]);
+
+      const fileType = "performer-applications";
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(field => {
+          const str = String(field || "");
+          return str.includes(",") || str.includes("\"") || str.includes("\n") ? `"${str.replace(/"/g, '""')}"` : str;
+        }).join(","))
+      ].join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.csv"`);
+      res.send(csvContent);
+    } else {
+      const applications = await db
+        .select()
+        .from(vendorApplicationsTable)
+        .orderBy(desc(vendorApplicationsTable.submittedAt));
+
+      if (applications.length === 0) {
+        res.status(404).json({ error: "No vendor applications found" });
+        return;
+      }
+
+      const headers = [
+        "ID", "Submitted At", "First Name", "Last Name", "Business Name", "Email", "Phone", 
+        "Street Address", "City", "Province", "Postal Code", "Website", "Instagram", 
+        "Facebook", "Online Store", "Other Social Media", "Product Categories", 
+        "Product Description", "Artist Bio", "Food Vendor", "Logo URL", "Photo URLs",
+        "Promo Permission", "Agreed to Terms"
+      ];
+
+      const rows = applications.map(app => [
+        app.id,
+        app.submittedAt ? new Date(app.submittedAt).toLocaleString() : "",
+        app.firstName,
+        app.lastName,
+        app.businessName ?? "",
+        app.emailAddress,
+        app.phoneNumber,
+        app.streetAddress,
+        app.city,
+        app.province,
+        app.postalCode,
+        app.website ?? "",
+        app.instagram ?? "",
+        app.facebook ?? "",
+        app.onlineStore ?? "",
+        app.otherSocialMedia ?? "",
+        app.productCategories,
+        app.productDescription,
+        app.artistBio,
+        app.isArtisanFoodVendor === "yes" ? "Yes" : "No",
+        app.logoFileName ?? "",
+        app.photoFileNames ?? "",
+        app.grantPromoPermission === "true" ? "Yes" : "No",
+        app.agreeToTerms === "true" ? "Yes" : "No"
+      ]);
+
+      const fileType = "vendor-applications";
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(field => {
+          const str = String(field || "");
+          return str.includes(",") || str.includes("\"") || str.includes("\n") ? `"${str.replace(/"/g, '""')}"` : str;
+        }).join(","))
+      ].join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.csv"`);
+      res.send(csvContent);
+    }
+  } catch (err) {
+    logger.error({ err }, "Failed to generate CSV");
+    res.status(500).json({ error: "Failed to generate CSV file" });
   }
 });
 

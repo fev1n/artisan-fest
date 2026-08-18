@@ -10,8 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   LogOut, Download, Search, Eye, EyeOff, Users, UtensilsCrossed, FileSpreadsheet,
-  Mail, Save, RefreshCw, ChevronRight, X, Info, MicVocal,
+  Mail, Save, RefreshCw, ChevronRight, X, Info, MicVocal, Image as ImageIcon,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -968,6 +974,7 @@ type Tab = "responses" | "performers" | "summary" | "email";
 export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem("admin_token") || "");
   const [tab, setTab] = useState<Tab>("responses");
+  const { toast } = useToast();
 
   function handleLogin() {
     setToken(sessionStorage.getItem("admin_token") || "");
@@ -976,6 +983,34 @@ export default function Admin() {
   function handleLogout() {
     sessionStorage.removeItem("admin_token");
     setToken("");
+  }
+
+  function handleDownload(downloadType: "logos" | "csv") {
+    const appType = tab === "performers" ? "performers" : "vendors";
+    const headers = new Headers({ Authorization: `Bearer ${token}` });
+    const url = `${BASE}/api/admin/download/${downloadType}?type=${appType}`;
+    
+    fetch(url, { headers })
+      .then(r => {
+        if (!r.ok) {
+          return r.json().then(err => { throw new Error(err.error || "Download failed"); });
+        }
+        return r.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const prefix = tab === "performers" ? "performer-" : "";
+        link.download = downloadType === "logos" 
+          ? `${prefix}logos-${new Date().toISOString().slice(0, 10)}.zip`
+          : `${prefix}applications-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        toast({ title: "Download failed", description: err.message, variant: "destructive" });
+      });
   }
 
   if (!token) return <LoginScreen onLogin={handleLogin} />;
@@ -994,14 +1029,35 @@ export default function Admin() {
           <h1 className="font-serif font-bold text-lg uppercase tracking-wide">Sauga Artisan Festival</h1>
           <p className="text-xs opacity-75">Admin Portal</p>
         </div>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={handleLogout}
-          className="gap-1.5 bg-white/20 hover:bg-white/30 text-white border-0 text-xs"
-        >
-          <LogOut className="w-3.5 h-3.5" /> Sign Out
-        </Button>
+        <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="gap-1.5 bg-white/20 hover:bg-white/30 text-white border-0 text-xs"
+              >
+                <Download className="w-3.5 h-3.5" /> Download
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48" align="end">
+              <DropdownMenuItem onClick={() => handleDownload("logos")} className="gap-2">
+                <ImageIcon className="w-4 h-4" /> Just Logos (ZIP)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload("csv")} className="gap-2">
+                <FileSpreadsheet className="w-4 h-4" /> All Details (CSV)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleLogout}
+            className="gap-1.5 bg-white/20 hover:bg-white/30 text-white border-0 text-xs"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Sign Out
+          </Button>
+        </div>
       </header>
 
       <div className="border-b border-border bg-card sticky top-0 z-10">
