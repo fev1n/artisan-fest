@@ -180,6 +180,7 @@ router.get("/admin/applications/export", requireAdmin, async (_req: Request, res
 
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", `attachment; filename="vendor-applications-${new Date().toISOString().slice(0, 10)}.xlsx"`);
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
   await workbook.xlsx.write(res);
   res.end();
 });
@@ -236,6 +237,7 @@ router.get("/admin/applications/:id/export", requireAdmin, async (req: Request, 
   const name = `${app.firstName}-${app.lastName}`.toLowerCase().replace(/\s+/g, "-");
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", `attachment; filename="application-${name}-${app.id}.xlsx"`);
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
   await workbook.xlsx.write(res);
   res.end();
 });
@@ -400,99 +402,54 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
   try {
     const { type = "vendors" } = req.query as { type?: "vendors" | "performers" };
 
-    if (type === "performers") {
-      const applications = await db
-        .select()
-        .from(performerApplicationsTable)
-        .orderBy(desc(performerApplicationsTable.submittedAt));
+    const applications = await db
+      .select()
+      .from(type === "performers" ? performerApplicationsTable : vendorApplicationsTable)
+      .orderBy(desc(type === "performers" ? performerApplicationsTable.submittedAt : vendorApplicationsTable.submittedAt));
 
-      const supabase = getSupabaseClient();
-      const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
-
-      const logoUrls: string[] = [];
-      for (const app of applications) {
-        if (app.logoFileName) {
-          logoUrls.push(app.logoFileName);
-        }
+    const logoFileNames: string[] = [];
+    for (const app of applications) {
+      if (app.logoFileName) {
+        logoFileNames.push(app.logoFileName);
       }
-
-      if (logoUrls.length === 0) {
-        res.status(404).json({ error: "No performer logos found" });
-        return;
-      }
-
-      res.setHeader("Content-Type", "application/zip");
-      res.setHeader("Content-Disposition", `attachment; filename="performer-logos-${new Date().toISOString().slice(0, 10)}.zip"`);
-
-      const archive = new ZipArchive();
-      archive.pipe(res);
-
-      for (const url of logoUrls) {
-        try {
-          const path = new URL(url).pathname.substring(1);
-          const { data, error } = await supabase.storage.from(bucket).download(path);
-
-          if (error) {
-            logger.warn({ error, url }, "Failed to download logo");
-            continue;
-          }
-
-          const fileName = path.split("/").pop() || "logo";
-          archive.append(data, { name: fileName });
-        } catch (err) {
-          logger.warn({ err, url }, "Failed to process logo URL");
-          continue;
-        }
-      }
-
-      await archive.finalize();
-    } else {
-      const applications = await db
-        .select()
-        .from(vendorApplicationsTable)
-        .orderBy(desc(vendorApplicationsTable.submittedAt));
-
-      const supabase = getSupabaseClient();
-      const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
-
-      const logoUrls: string[] = [];
-      for (const app of applications) {
-        if (app.logoFileName) {
-          logoUrls.push(app.logoFileName);
-        }
-      }
-
-      if (logoUrls.length === 0) {
-        res.status(404).json({ error: "No vendor logos found" });
-        return;
-      }
-
-      res.setHeader("Content-Type", "application/zip");
-      res.setHeader("Content-Disposition", `attachment; filename="logos-${new Date().toISOString().slice(0, 10)}.zip"`);
-
-      const archive = new ZipArchive();
-      archive.pipe(res);
-
-      for (const url of logoUrls) {
-        try {
-          const path = new URL(url).pathname.substring(1);
-          const { data, error } = await supabase.storage.from(bucket).download(path);
-
-          if (error) {
-            logger.warn({ error, url }, "Failed to download logo");
-            continue;
-          }
-
-          const fileName = path.split("/").pop() || "logo";
-          archive.append(data, { name: fileName });
-        } catch (err) {
-          logger.warn({ err, url }, "Failed to process logo URL");
-          continue;
-        }
-      }
-
-      await archive.finalize();
     }
+
+    if (logoFileNames.length === 0) {
+      res.status(404).json({ error: `No ${type} logos found` });
+      return;
+    }
+
+    const fileType = type === "performers" ? "performer-logos" : "logos";
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.zip"`);
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+
+    const archive = new ZipArchive();
+    archive.pipe(res);
+
+    const supabase = getSupabaseClient();
+    const bucket = type === "performers" ? "performer-uploads" : "vendor-uploads";
+
+    for (const fileName of logoFileNames) {
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .download(`logos/${fileName}`);
+
+        if (error) {
+          logger.warn({ error: error.message, fileName }, "Failed to download logo from Supabase");
+          continue;
+        }
+
+        const buffer = await data.arrayBuffer();
+        archive.append(Buffer.from(buffer), { name: fileName });
+      } catch (err) {
+        logger.warn({ err, fileName }, "Failed to process logo file");
+        continue;
+      }
+    }
+
+    await archive.finalize();
   } catch (err) {
     logger.error({ err }, "Failed to create logos zip");
     res.status(500).json({ error: "Failed to create zip file" });
@@ -555,6 +512,7 @@ router.get("/admin/download/csv", requireAdmin, async (req: Request, res: Respon
 
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.csv"`);
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
       res.send(csvContent);
     } else {
       const applications = await db
@@ -613,6 +571,7 @@ router.get("/admin/download/csv", requireAdmin, async (req: Request, res: Respon
 
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.csv"`);
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
       res.send(csvContent);
     }
   } catch (err) {
