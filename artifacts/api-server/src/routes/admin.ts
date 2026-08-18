@@ -407,10 +407,13 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
       .from(type === "performers" ? performerApplicationsTable : vendorApplicationsTable)
       .orderBy(desc(type === "performers" ? performerApplicationsTable.submittedAt : vendorApplicationsTable.submittedAt));
 
-    const logoFileNames: string[] = [];
+    const logoFileNames: { fileName: string; appName: string }[] = [];
     for (const app of applications) {
       if (app.logoFileName) {
-        logoFileNames.push(app.logoFileName);
+        const appName = type === "performers" 
+          ? (app as any).performerName || (app as any).contactPersonName || `performer-${app.id}`
+          : (app as any).businessName || `${app.firstName} ${app.lastName}`.trim() || `vendor-${app.id}`;
+        logoFileNames.push({ fileName: app.logoFileName, appName });
       }
     }
 
@@ -430,7 +433,7 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
     const supabase = getSupabaseClient();
     const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
 
-    for (const fileName of logoFileNames) {
+    for (const { fileName, appName } of logoFileNames) {
       try {
         // Extract just the path from the full URL
         // Supabase public URLs are in format: https://.../storage/v1/object/public/bucket/path/to/file
@@ -472,8 +475,16 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
         }
 
         const buffer = await data.arrayBuffer();
-        // Use just the filename for the zip archive
-        const archiveName = filePath.split("/").pop() || fileName;
+        // Extract file extension from the original filename
+        const originalFileName = filePath.split("/").pop() || fileName;
+        const fileExtension = originalFileName.includes(".") 
+          ? originalFileName.substring(originalFileName.lastIndexOf(".")) 
+          : ".jpg";
+        
+        // Create a clean filename using the app name
+        const cleanAppName = appName.replace(/[^a-zA-Z0-9 _-]/g, "_").replace(/\s+/g, "_").substring(0, 50);
+        const archiveName = `${cleanAppName}${fileExtension}`;
+        
         archive.append(Buffer.from(buffer), { name: archiveName });
       } catch (err) {
         logger.warn({ err, fileName }, "Failed to process logo file");
