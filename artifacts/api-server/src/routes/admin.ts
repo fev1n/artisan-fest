@@ -412,7 +412,7 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
       if (app.logoFileName) {
         const appName = type === "performers" 
           ? (app as any).performerName || (app as any).contactPersonName || `performer-${app.id}`
-          : (app as any).businessName || `${app.firstName} ${app.lastName}`.trim() || `vendor-${app.id}`;
+          : (app as any).businessName || `${(app as any).firstName} ${(app as any).lastName}`.trim() || `vendor-${app.id}`;
         logoFileNames.push({ fileName: app.logoFileName, appName });
       }
     }
