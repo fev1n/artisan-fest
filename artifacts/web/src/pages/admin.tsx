@@ -412,20 +412,7 @@ function ResponsesTab({ token }: { token: string }) {
     },
   });
 
-  function handleExportAll() {
-    const headers = new Headers({ Authorization: `Bearer ${token}` });
-    fetch(`${BASE}/api/admin/applications/export`, { headers })
-      .then(r => r.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `vendor-applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
-        link.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch(() => toast({ title: "Export failed", variant: "destructive" }));
-  }
+
 
   return (
     <div className="space-y-4">
@@ -442,9 +429,6 @@ function ResponsesTab({ token }: { token: string }) {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => refetch()} className="gap-1.5">
             <RefreshCw className="w-4 h-4" /> Refresh
-          </Button>
-          <Button size="sm" onClick={handleExportAll} className="gap-1.5 bg-primary hover:bg-secondary hover:text-secondary-foreground">
-            <FileSpreadsheet className="w-4 h-4" /> Export All
           </Button>
         </div>
       </div>
@@ -1001,7 +985,7 @@ export default function Admin() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        const prefix = tab === "performers" ? "performer-" : "";
+        const prefix = tab === "performers" ? "performer-" : "vendor-";
         link.download = downloadType === "logos" 
           ? `${prefix}logos-${new Date().toISOString().slice(0, 10)}.zip`
           : `${prefix}applications-${new Date().toISOString().slice(0, 10)}.csv`;

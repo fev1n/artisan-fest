@@ -422,7 +422,7 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
       return;
     }
 
-    const fileType = type === "performers" ? "performer-logos" : "logos";
+    const fileType = type === "performers" ? "performer-logos" : "vendor-logos";
     res.setHeader("Content-Type", "application/zip");
     res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.zip"`);
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
