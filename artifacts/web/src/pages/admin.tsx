@@ -18,6 +18,7 @@ import {
 import {
   LogOut, Download, Search, Eye, EyeOff, Users, UtensilsCrossed, FileSpreadsheet,
   Mail, Save, RefreshCw, ChevronRight, X, Info, MicVocal, Image as ImageIcon,
+  FolderArchive,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -969,7 +970,7 @@ export default function Admin() {
     setToken("");
   }
 
-  function handleDownload(downloadType: "logos" | "csv") {
+  function handleDownload(downloadType: "logos" | "csv" | "all-files") {
     const appType = tab === "performers" ? "performers" : "vendors";
     const headers = new Headers({ Authorization: `Bearer ${token}` });
     const url = `${BASE}/api/admin/download/${downloadType}?type=${appType}`;
@@ -988,7 +989,9 @@ export default function Admin() {
         const prefix = tab === "performers" ? "performer-" : "vendor-";
         link.download = downloadType === "logos" 
           ? `${prefix}logos-${new Date().toISOString().slice(0, 10)}.zip`
-          : `${prefix}applications-${new Date().toISOString().slice(0, 10)}.csv`;
+          : downloadType === "all-files"
+            ? `${prefix}all-files-${new Date().toISOString().slice(0, 10)}.zip`
+            : `${prefix}applications-${new Date().toISOString().slice(0, 10)}.csv`;
         link.click();
         URL.revokeObjectURL(url);
       })
@@ -1030,6 +1033,9 @@ export default function Admin() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleDownload("csv")} className="gap-2">
                 <FileSpreadsheet className="w-4 h-4" /> All Details (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload("all-files")} className="gap-2">
+                <FolderArchive className="w-4 h-4" /> All Files (ZIP)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -499,6 +499,111 @@ router.get("/admin/download/logos", requireAdmin, async (req: Request, res: Resp
   }
 });
 
+router.get("/admin/download/all-files", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { type = "vendors" } = req.query as { type?: "vendors" | "performers" };
+
+    const applications = await db
+      .select()
+      .from(type === "performers" ? performerApplicationsTable : vendorApplicationsTable)
+      .orderBy(desc(type === "performers" ? performerApplicationsTable.submittedAt : vendorApplicationsTable.submittedAt));
+
+    const fileType = type === "performers" ? "performer-files" : "vendor-files";
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileType}-${new Date().toISOString().slice(0, 10)}.zip"`);
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+
+    const archive = new ZipArchive();
+    archive.pipe(res);
+
+    const supabase = getSupabaseClient();
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "vendor-uploads";
+
+    for (const app of applications) {
+      const appName = type === "performers" 
+        ? (app as any).performerName || (app as any).contactPersonName || `performer-${app.id}`
+        : (app as any).businessName || `${(app as any).firstName} ${(app as any).lastName}`.trim() || `vendor-${app.id}`;
+      
+      const cleanAppName = appName.replace(/[^a-zA-Z0-9 _-]/g, "_").replace(/\s+/g, "_").substring(0, 50);
+      const folderName = `${cleanAppName}_${app.id}`;
+
+      const filesToDownload: { fileName: string; archivePath: string }[] = [];
+      
+      if (app.logoFileName) {
+        filesToDownload.push({ 
+          fileName: app.logoFileName, 
+          archivePath: `${folderName}/logo` 
+        });
+      }
+
+      if (app.photoFileNames) {
+        const photos = app.photoFileNames.split(",").map((f: string) => f.trim()).filter(Boolean);
+        photos.forEach((photo, index) => {
+          filesToDownload.push({ 
+            fileName: photo, 
+            archivePath: `${folderName}/photo_${index + 1}` 
+          });
+        });
+      }
+
+      if (filesToDownload.length === 0) continue;
+
+      for (const { fileName, archivePath } of filesToDownload) {
+        try {
+          let filePath = fileName;
+          if (fileName.startsWith("http")) {
+            const url = new URL(fileName);
+            const pathParts = url.pathname.split("/");
+            const objectPublicIndex = pathParts.indexOf("object");
+            const publicIndex = pathParts.indexOf("public", objectPublicIndex);
+            if (objectPublicIndex >= 0 && publicIndex >= 0 && pathParts.length > publicIndex + 2) {
+              const actualBucket = pathParts[publicIndex + 1];
+              if (actualBucket === bucket) {
+                filePath = pathParts.slice(publicIndex + 2).join("/");
+              } else {
+                const bucketIndex = pathParts.indexOf(bucket);
+                if (bucketIndex >= 0 && pathParts.length > bucketIndex + 1) {
+                  filePath = pathParts.slice(bucketIndex + 1).join("/");
+                } else {
+                  filePath = pathParts[pathParts.length - 1];
+                }
+              }
+            } else {
+              filePath = pathParts[pathParts.length - 1];
+            }
+          }
+
+          const { data, error } = await supabase.storage
+            .from(bucket)
+            .download(filePath);
+
+          if (error) {
+            logger.warn({ error: error.message, fileName, filePath, bucket }, "Failed to download file from Supabase");
+            continue;
+          }
+
+          const buffer = await data.arrayBuffer();
+          const originalFileName = filePath.split("/").pop() || fileName;
+          const fileExtension = originalFileName.includes(".") 
+            ? originalFileName.substring(originalFileName.lastIndexOf(".")) 
+            : ".jpg";
+          
+          const finalArchivePath = `${archivePath}${fileExtension}`;
+          archive.append(Buffer.from(buffer), { name: finalArchivePath });
+        } catch (err) {
+          logger.warn({ err, fileName }, "Failed to process file");
+          continue;
+        }
+      }
+    }
+
+    await archive.finalize();
+  } catch (err) {
+    logger.error({ err }, "Failed to create all files zip");
+    res.status(500).json({ error: "Failed to create zip file" });
+  }
+});
+
 router.get("/admin/download/csv", requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { type = "vendors" } = req.query as { type?: "vendors" | "performers" };
