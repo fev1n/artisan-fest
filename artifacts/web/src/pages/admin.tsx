@@ -18,7 +18,7 @@ import {
 import {
   LogOut, Download, Search, Eye, EyeOff, Users, UtensilsCrossed, FileSpreadsheet,
   Mail, Save, RefreshCw, ChevronRight, X, Info, MicVocal, Image as ImageIcon,
-  FolderArchive,
+  FolderArchive, Loader2,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -970,22 +970,61 @@ export default function Admin() {
     setToken("");
   }
 
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{id: string, progress: number} | null>(null);
+
   function handleDownload(downloadType: "logos" | "csv" | "all-files") {
     const appType = tab === "performers" ? "performers" : "vendors";
+    const downloadLabel = downloadType === "logos" ? "Logos" : downloadType === "all-files" ? "All Files" : "CSV";
+    const downloadId = Date.now().toString();
+    
+    setDownloading(downloadLabel);
+    setDownloadProgress({id: downloadId, progress: 0});
+    
+    // Show initial toast
+    toast({
+      title: `Preparing ${downloadLabel.toLowerCase()}...`,
+      description: "This may take a while for large downloads.",
+      duration: 10000, // 10 seconds
+    });
+    
     const headers = new Headers({ Authorization: `Bearer ${token}` });
     const url = `${BASE}/api/admin/download/${downloadType}?type=${appType}`;
     
+    // Set a timeout to prevent hanging (10 minutes for all-files, 2 minutes for others)
+    const timeout = downloadType === "all-files" ? 600000 : 120000;
+    const timeoutId = setTimeout(() => {
+      setDownloading(null);
+      setDownloadProgress(null);
+      toast({ 
+        title: "Download timeout", 
+        description: `The ${downloadLabel.toLowerCase()} download is taking too long. Please try again.`,
+        variant: "destructive" 
+      });
+    }, timeout);
+    
     fetch(url, { headers })
       .then(r => {
+        clearTimeout(timeoutId);
         if (!r.ok) {
-          return r.json().then(err => { throw new Error(err.error || "Download failed"); });
+          return r.json().then(err => { 
+            throw new Error(err.error || `Download failed: ${r.status} ${r.statusText}`); 
+          });
         }
         return r.blob();
       })
       .then(blob => {
-        const url = URL.createObjectURL(blob);
+        clearTimeout(timeoutId);
+        setDownloading(null);
+        setDownloadProgress(null);
+        
+        if (blob.size === 0) {
+          throw new Error("Received empty file. There may be no files to download.");
+        }
+        
+        const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.href = url;
+        link.href = objectUrl;
         const prefix = tab === "performers" ? "performer-" : "vendor-";
         link.download = downloadType === "logos" 
           ? `${prefix}logos-${new Date().toISOString().slice(0, 10)}.zip`
@@ -993,10 +1032,26 @@ export default function Admin() {
             ? `${prefix}all-files-${new Date().toISOString().slice(0, 10)}.zip`
             : `${prefix}applications-${new Date().toISOString().slice(0, 10)}.csv`;
         link.click();
-        URL.revokeObjectURL(url);
+        
+        // Clean up after a delay to ensure the download starts
+        setTimeout(() => {
+          URL.revokeObjectURL(objectUrl);
+        }, 1000);
+        
+        toast({ 
+          title: "Download started", 
+          description: `${downloadLabel} download should begin shortly. Check your downloads folder.`,
+        });
       })
       .catch(err => {
-        toast({ title: "Download failed", description: err.message, variant: "destructive" });
+        clearTimeout(timeoutId);
+        setDownloading(null);
+        setDownloadProgress(null);
+        toast({ 
+          title: "Download failed", 
+          description: err.message.includes("timeout") ? err.message : `Failed to download ${downloadLabel.toLowerCase()}: ${err.message}`,
+          variant: "destructive" 
+        });
       });
   }
 
@@ -1017,24 +1072,43 @@ export default function Admin() {
           <p className="text-xs opacity-75">Admin Portal</p>
         </div>
         <div className="flex items-center gap-3">
+          {downloading && (
+            <div className="flex items-center gap-2 text-white/80 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Preparing {downloading.toLowerCase()}...</span>
+            </div>
+          )}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild disabled={!!downloading}>
               <Button
                 size="sm"
                 variant="secondary"
+                disabled={!!downloading}
                 className="gap-1.5 bg-white/20 hover:bg-white/30 text-white border-0 text-xs"
               >
                 <Download className="w-3.5 h-3.5" /> Download
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48" align="end">
-              <DropdownMenuItem onClick={() => handleDownload("logos")} className="gap-2">
+              <DropdownMenuItem 
+                onClick={() => handleDownload("logos")} 
+                className="gap-2"
+                disabled={!!downloading}
+              >
                 <ImageIcon className="w-4 h-4" /> Just Logos (ZIP)
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDownload("csv")} className="gap-2">
+              <DropdownMenuItem 
+                onClick={() => handleDownload("csv")} 
+                className="gap-2"
+                disabled={!!downloading}
+              >
                 <FileSpreadsheet className="w-4 h-4" /> All Details (CSV)
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDownload("all-files")} className="gap-2">
+              <DropdownMenuItem 
+                onClick={() => handleDownload("all-files")} 
+                className="gap-2"
+                disabled={!!downloading}
+              >
                 <FolderArchive className="w-4 h-4" /> All Files (ZIP)
               </DropdownMenuItem>
             </DropdownMenuContent>

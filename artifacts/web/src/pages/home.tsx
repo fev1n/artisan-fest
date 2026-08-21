@@ -239,6 +239,7 @@ const Navbar = () => {
     { name: "About", href: "about" },
     { name: "Vendors", href: "vendors" },
     { name: "Vendor List", href: "vendor-list" },
+    { name: "Entertainment", href: "entertainment" },
     { name: "Location", href: "location" },
   ];
 
@@ -486,6 +487,18 @@ const VendorList = () => {
     { name: "Trendsaac Inc.", logo: "/vendors/TrendsaacInc.jpg" },
     { name: "Valerie Armada", logo: "/vendors/ValerieArmada.jpeg" },
     { name: "Spoon Zee", logo: "/vendors/SpoonZee.png" },
+    { name: "Awe Boutique", logo: "/vendors/AweBoutique.png" },
+    { name: "Whirligig", logo: "/vendors/Whirligig.jpg" },
+    { name: "Crochet by Em", logo: "/vendors/CrochetByEmma.png" },
+    { name: "Learn Spanish Canada", logo: "/vendors/LearnSpanishCanada.png" },
+    { name: "Sharpe Creations", logo: "/vendors/SharpeCreations.jpg" },
+    { name: "Amora Jewels", logo: "/vendors/Amora.png" },
+    { name: "Sue Davis Art", logo: "/vendors/SueDaviesArt.jpeg" },
+    { name: "Stick it Studio", logo: "/vendors/StickItStudio.png" },
+    { name: "Atelier Virdee", logo: "/vendors/AtelierVirdee.png" },
+    { name: "H&W", logo: "/vendors/H&W.jpg" },
+    { name: "Tinos Wood Creations", logo: "/vendors/TinosWoodCreations.jpg" },
+    { name: "Engraved YYZ", logo: "/vendors/EngravedYYZ.jpg" },
   ];
 
   return (
@@ -529,24 +542,104 @@ const VendorList = () => {
   );
 };
 
+// ── Entertainment ────────────────────────────────────────────────────────────
+
+const Entertainment = () => {
+  const noMotion = useReducedMotion();
+  const performers = [
+    { name: "TREA", time: "12:30-1:30 PM", logo: "/performers/TREA.jpeg" },
+    { name: "MIR KASHIF IQBAL", time: "1:30-2:00 PM", logo: "/performers/MirKashifIqbal.webp" },
+    { name: "BLUEWAVE", time: "2:30-3:30 PM", logo: "/performers/BlueWaveInteractiveDrumCircle.jpeg" },
+    { name: "CARINA", time: "4:00-5:00 PM", logo: "/performers/Carina.jpg" },
+    { name: "JOE CHAMMAS", time: "5:30-6:30 PM", logo: "/performers/JoeChammas.jpg" },
+    { name: "ADINA V", time: "7:00-8:00 PM", logo: "/performers/AdinaV.jpeg" },
+  ];
+
+  return (
+    <section id="entertainment" className="py-24 bg-[#fafafa]">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="max-w-2xl mx-auto text-center mb-14">
+          <h2 className="text-5xl md:text-6xl font-[Caveat] text-[#e7572f] mb-5">Live Music Lineup</h2>
+          <p className="text-lg font-sans text-[#3d0082]/75 leading-relaxed">
+            Enjoy live performances throughout the day at the festival.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+          {performers.map((performer, i) => (
+            <motion.div key={i}
+              initial={noMotion ? {} : { opacity: 0, y: 16 }}
+              whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: noMotion ? 0 : i * 0.08 }}
+              whileHover={noMotion ? {} : { y: -4, scale: 1.03 }}
+              className="flex flex-col items-center gap-3 cursor-default bg-white p-6 rounded-2xl shadow-lg border-2 border-[#fdb92e]/20">
+              <div className="w-full aspect-square rounded-xl overflow-hidden bg-[#fafafa]"
+                style={{ boxShadow: "0 2px 12px 0 rgba(61,0,130,0.10)", border: "1.5px solid rgba(61,0,130,0.12)" }}>
+                <img src={performer.logo} alt={performer.name} className="w-full h-full object-cover" />
+              </div>
+              <div className="text-center mt-2">
+                <p className="font-[Caveat] text-xl text-[#3d0082] leading-tight">{performer.name}</p>
+                <p className="font-sans text-sm text-[#e7572f] font-semibold mt-1">{performer.time}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // ── Sponsors ──────────────────────────────────────────────────────────────────
 
-const Sponsors = () => (
-  <section className="py-24 bg-[#fafafa]">
-    <div className="container mx-auto px-4 md:px-6">
-      <div className="bg-white rounded-[3rem] p-12 md:p-20 text-center max-w-4xl mx-auto shadow-lg border-2 border-[#fdb92e]">
-        <h2 className="text-4xl md:text-5xl font-[Caveat] text-[#e7572f] mb-7">Partner With the Festival</h2>
-        <p className="text-lg md:text-xl font-sans text-[#3d0082]/75 leading-relaxed mb-10">
-          Sauga Artisan Festival is built to support local creativity, small businesses, and community connection. We welcome conversations with sponsors, community partners, and local organizations who want to be part of this first-year festival.
-        </p>
-        <a href="#contact" onClick={(e) => scrollTo(e, "contact")}
-          className="inline-block border-2 border-[#e7572f] text-[#e7572f] hover:bg-[#e7572f] hover:text-white px-10 py-4 rounded-full font-bold font-sans text-lg transition-colors">
-          Contact Us
-        </a>
+const Sponsors = () => {
+  const noMotion = useReducedMotion();
+  const partners = [
+    { name: "Costco", logo: "/partners/Costco.png" },
+    { name: "Sam McDadi Real Estate", logo: "/partners/SamMcDadiRealEstateInc.jpg" },
+  ];
+
+  return (
+    <section className="py-24 bg-[#fafafa]">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="bg-white rounded-[3rem] p-12 md:p-20 text-center max-w-5xl mx-auto shadow-lg border-2 border-[#fdb92e]">
+          <h2 className="text-4xl md:text-5xl font-[Caveat] text-[#e7572f] mb-7">Our Partners</h2>
+          <p className="text-lg md:text-xl font-sans text-[#3d0082]/75 leading-relaxed mb-10">
+            Sauga Artisan Festival is built to support local creativity, small businesses, and community connection. We welcome conversations with sponsors, community partners, and local organizations who want to be part of this first-year festival.
+          </p>
+          
+          {/* Partner Logos */}
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 mb-10">
+            {partners.map((partner, i) => (
+              <motion.div
+                key={i}
+                initial={noMotion ? {} : { opacity: 0, y: 16 }}
+                whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: noMotion ? 0 : i * 0.1 }}
+                className="flex flex-col items-center gap-2"
+              >
+                <div className="p-4 bg-[#fafafa] rounded-2xl border-2 border-[#fdb92e]/30 shadow-md">
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="h-16 w-auto object-contain"
+                  />
+                </div>
+                <p className="font-sans text-sm text-[#3d0082]/80 font-semibold">{partner.name}</p>
+              </motion.div>
+            ))}
+          </div>
+          
+          <a href="#contact" onClick={(e) => scrollTo(e, "contact")}
+            className="inline-block border-2 border-[#e7572f] text-[#e7572f] hover:bg-[#e7572f] hover:text-white px-10 py-4 rounded-full font-bold font-sans text-lg transition-colors">
+            Partner With Us
+          </a>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 // ── Location ──────────────────────────────────────────────────────────────────
 
@@ -612,6 +705,7 @@ export default function Home() {
         <About />
         <VendorCallout />
         <VendorList />
+        <Entertainment />
         <Sponsors />
         <Location />
       </main>
