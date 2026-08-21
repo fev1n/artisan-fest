@@ -501,6 +501,16 @@ const VendorList = () => {
     { name: "Engraved YYZ", logo: "/vendors/EngravedYYZ.jpg" },
   ];
 
+  // Preload first 10 vendor logos for faster initial render
+  useEffect(() => {
+    const firstVendors = vendors.slice(0, 10);
+    firstVendors.forEach(vendor => {
+      const img = new Image();
+      img.src = vendor.logo;
+      img.loading = 'eager';
+    });
+  }, []);
+
   return (
     <section id="vendor-list" className="py-24 bg-white">
       <div className="container mx-auto px-4 md:px-6">
@@ -516,13 +526,19 @@ const VendorList = () => {
             <motion.div key={i}
               initial={noMotion ? {} : { opacity: 0, y: 16 }}
               whileInView={noMotion ? {} : { opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: noMotion ? 0 : i * 0.08 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ delay: noMotion ? 0 : i * 0.04, duration: 0.3 }}
               whileHover={noMotion ? {} : { y: -4, scale: 1.03 }}
               className="flex flex-col items-center gap-3 cursor-default">
               <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#fafafa]"
                 style={{ boxShadow: "0 2px 12px 0 rgba(61,0,130,0.10)", border: "1.5px solid rgba(61,0,130,0.12)" }}>
-                <img src={vendor.logo} alt={vendor.name} className="w-full h-full object-cover" />
+                <img 
+                  src={vendor.logo} 
+                  alt={vendor.name} 
+                  className="w-full h-full object-cover" 
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               <p className="font-[Caveat] text-lg text-[#3d0082] text-center leading-tight">{vendor.name}</p>
             </motion.div>
