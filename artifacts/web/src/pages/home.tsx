@@ -565,7 +565,7 @@ const Entertainment = () => {
   const performers = [
     { name: "TREA", time: "12:30-1:30 PM", logo: "/performers/TREA.jpeg" },
     { name: "MIR KASHIF IQBAL", time: "1:30-2:00 PM", logo: "/performers/MirKashifIqbal.webp" },
-    { name: "BLUEWAVE", time: "2:30-3:30 PM", logo: "/performers/BlueWaveInteractiveDrumCircle.jpeg" },
+    { name: "BLUEWAVE", time: "2:30-3:30 PM", logo: "/performers/BlueWaveInteractiveDrumCircle.webp" },
     { name: "CARINA", time: "4:00-5:00 PM", logo: "/performers/Carina.jpg" },
     { name: "JOE CHAMMAS", time: "5:30-6:30 PM", logo: "/performers/JoeChammas.jpg" },
     { name: "ADINA V", time: "7:00-8:00 PM", logo: "/performers/AdinaV.jpeg" },
